@@ -122,6 +122,7 @@ python3 -m pip install -e '.[dev,akshare]'
 ## 更多文档
 
 - [命令说明与配置说明](docs/commands.md)
+- [Agent 安装使用说明](AGENTS.md)
 - [StockAPI 接口说明](docs/stockapi.md)
 - [腾讯股票接口说明](docs/tencent-api.md)
 
