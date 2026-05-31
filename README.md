@@ -1,8 +1,9 @@
 # stock-up
 
 [![CI](https://github.com/Guitenbay/stock-up/actions/workflows/ci.yml/badge.svg)](https://github.com/Guitenbay/stock-up/actions/workflows/ci.yml)
-[![PyPI version](https://img.shields.io/pypi/v/stock-up.svg)](https://pypi.org/project/stock-up/)
-[![Python versions](https://img.shields.io/pypi/pyversions/stock-up.svg)](https://pypi.org/project/stock-up/)
+[![PyPI version](https://img.shields.io/pypi/v/stock-up?cacheSeconds=3600)](https://pypi.org/project/stock-up/)
+[![Python versions](https://img.shields.io/pypi/pyversions/stock-up?cacheSeconds=3600)](https://pypi.org/project/stock-up/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 命令行版个人股票策略执行助手。
 
@@ -125,6 +126,8 @@ python3 -m pip install -e '.[dev,akshare]'
 
 - [命令说明与配置说明](docs/commands.md)
 - [Agent 安装使用说明](AGENTS.md)
+- [贡献指南](CONTRIBUTING.md)
+- [许可证](LICENSE)
 - [StockAPI 接口说明](docs/stockapi.md)
 - [腾讯股票接口说明](docs/tencent-api.md)
 
