@@ -1,0 +1,127 @@
+from __future__ import annotations
+
+import json
+from datetime import date, timedelta
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+from stock_up.models import DailyBar, LimitUpStock, Quote
+
+
+BASE_URL = "https://www.stockapi.com.cn/v1/base/day"
+
+
+def build_date_windows(start: date, end: date, max_days: int = 5) -> list[tuple[str, str]]:
+    windows: list[tuple[str, str]] = []
+    cur = start
+    while cur <= end:
+        window_end = min(cur + timedelta(days=max_days - 1), end)
+        windows.append((cur.isoformat(), window_end.isoformat()))
+        cur = window_end + timedelta(days=1)
+    return windows
+
+
+def strip_market_prefix(code: str) -> str:
+    value = str(code or "").strip().lower()
+    for prefix in ("sh", "sz", "bj"):
+        if value.startswith(prefix):
+            return value[len(prefix):]
+    return value
+
+
+def parse_stockapi_daily(code: str, payload: dict) -> list[DailyBar]:
+    if payload.get("code") != 20000:
+        return []
+    data = payload.get("data") or {}
+    if isinstance(data, list):
+        return _parse_stockapi_row_list(code, data)
+    if not isinstance(data, dict):
+        return []
+
+    dates = data.get("date") or data.get("dates") or data.get("tradeDate") or data.get("trade_date")
+    if not dates:
+        return []
+
+    opens = data.get("open") or []
+    highs = data.get("high") or []
+    lows = data.get("low") or []
+    closes = data.get("close") or []
+    volumes = data.get("volume") or []
+    amounts = data.get("amount") or data.get("transactionAmount") or []
+
+    rows: list[DailyBar] = []
+    for idx, trade_date in enumerate(dates):
+        try:
+            rows.append(DailyBar(
+                code=code,
+                trade_date=str(trade_date),
+                open=float(opens[idx]),
+                high=float(highs[idx]),
+                low=float(lows[idx]),
+                close=float(closes[idx]),
+                volume=float(volumes[idx]) if idx < len(volumes) else 0.0,
+                amount=float(amounts[idx]) if idx < len(amounts) else 0.0,
+            ))
+        except (IndexError, TypeError, ValueError):
+            continue
+    return rows
+
+
+def _parse_stockapi_row_list(code: str, rows_data: list) -> list[DailyBar]:
+    rows: list[DailyBar] = []
+    for item in rows_data:
+        if not isinstance(item, dict):
+            continue
+        try:
+            rows.append(DailyBar(
+                code=code,
+                trade_date=str(item.get("time") or item.get("date") or item.get("tradeDate")),
+                open=float(item.get("open", 0) or 0),
+                high=float(item.get("high", 0) or 0),
+                low=float(item.get("low", 0) or 0),
+                close=float(item.get("close", 0) or 0),
+                volume=float(item.get("volume", 0) or 0),
+                amount=float(item.get("amount", 0) or item.get("transactionAmount", 0) or 0),
+            ))
+        except (TypeError, ValueError):
+            continue
+    return rows
+
+
+class StockApiProvider:
+    def __init__(self, token: str = ""):
+        self.token = token
+
+    def get_realtime_quotes(self, codes: list[str]) -> list[Quote]:
+        return []
+
+    def get_daily_bars(self, code: str, days: int) -> list[DailyBar]:
+        end = date.today()
+        start = end - timedelta(days=max(days * 2 + 10, 40))
+        all_rows: list[DailyBar] = []
+        max_window_days = 30 if self.token else 5
+        for start_date, end_date in build_date_windows(start, end, max_days=max_window_days):
+            params = {
+                "code": strip_market_prefix(code),
+                "startDate": start_date,
+                "endDate": end_date,
+                "calculationCycle": "100",
+            }
+            if self.token:
+                params["token"] = self.token
+            url = BASE_URL + "?" + urlencode(params)
+            try:
+                req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urlopen(req, timeout=10) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+            except Exception:
+                continue
+            all_rows.extend(parse_stockapi_daily(code, payload))
+        unique = {bar.trade_date: bar for bar in all_rows}
+        return [unique[k] for k in sorted(unique)][-days:]
+
+    def get_limit_up_pool(self, trade_date: str) -> list[LimitUpStock]:
+        return []
+
+    def get_trade_calendar(self) -> list[str]:
+        return []
