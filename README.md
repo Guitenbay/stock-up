@@ -71,7 +71,9 @@ stock-up tick
 stock-up daily
 ```
 
-收盘后执行一次。默认使用 StockAPI，并自动扫描龙虎榜加入观察池，生成 Markdown 日报：
+建议每日 16:00 以后执行。默认使用 StockAPI，并自动扫描龙虎榜加入观察池，生成 Markdown 日报。
+
+> `daily` 依赖的数据源通常在每日 16:00 以后更新；太早执行可能拿不到当天最新数据。
 
 ```text
 ~/.stock-up/reports/YYYY-MM-DD.md

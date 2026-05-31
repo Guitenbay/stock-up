@@ -132,6 +132,8 @@ stock-up daily
 
 `daily` 是普通用户主要依赖的自动入口，默认使用 StockAPI，自动扫描龙虎榜并把股票加入观察池。
 
+建议每日 16:00 以后执行 `stock-up daily`。它依赖的数据源通常在 16:00 以后更新；太早执行可能拿不到当天最新数据。
+
 当前自动加入观察池的策略状态：
 
 - 默认自动加入：龙虎榜，配置项是 `auto_watch.dragon_tiger_scan_enabled: true`。

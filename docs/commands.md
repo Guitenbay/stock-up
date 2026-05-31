@@ -152,7 +152,7 @@ report:
 |---|---|---|
 | `stock-up init` | 初始化配置、数据库和报告目录 | `stock-up init` |
 | `stock-up tick` | 执行一次盘中检查，由定时任务调用 | `stock-up tick` |
-| `stock-up daily` | 收盘后生成每日复盘报告；默认自动扫描龙虎榜并加入观察池 | `stock-up daily` |
+| `stock-up daily` | 每日 16:00 后生成复盘报告；默认自动扫描龙虎榜并加入观察池 | `stock-up daily` |
 | `stock-up quote CODE` | 查看单只股票行情 | `stock-up quote 300308` |
 | `stock-up watch list` | 查看观察池 | `stock-up watch list` |
 | `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
@@ -364,9 +364,13 @@ stock-up scan limit-up --low-mode recent_1d
 
 ## 每日报告
 
+建议每日 16:00 以后执行：
+
 ```bash
 stock-up daily
 ```
+
+`daily` 依赖的数据源通常在每日 16:00 以后更新；太早执行可能拿不到当天最新数据。
 
 测试：
 
