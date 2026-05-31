@@ -20,6 +20,130 @@ stock-up init
 stock-up init --home /tmp/stock-up-demo
 ```
 
+## 配置文件
+
+默认配置文件位置：
+
+```text
+~/.stock-up/config.yaml
+```
+
+如果使用 `--home` 指定目录，配置文件会放在该目录下：
+
+```bash
+stock-up init --home /tmp/stock-up-demo
+# 配置文件：/tmp/stock-up-demo/config.yaml
+```
+
+默认配置示例：
+
+```yaml
+market:
+  quote_source: akshare
+  limit_up_source_order:
+    - akshare_em
+    - akshare_ths
+  realtime_fallback_order:
+    - akshare
+    - qq
+
+tick:
+  trading_time_only: true
+  min_interval_seconds: 20
+
+limit_up:
+  exclude_st: true
+  exclude_bj: true
+  exclude_new_stock_days: 30
+  min_amount: 500000000
+  include_first_board: true
+  include_multi_board: true
+
+auto_watch:
+  hot_leader_scan_enabled: false
+
+watch:
+  initial_low_mode: same_day
+  buy_382_tolerance: 0.03
+  buy_618_tolerance: 0.02
+  abandon_below_786: true
+  abandon_below_low: true
+
+technical:
+  rsi:
+    enabled: true
+    short_period: 6
+    long_period: 12
+    min_history_days: 30
+    max_updates_per_daily: 50
+    watch_golden_cross: true
+    holding_dead_cross: true
+
+holding:
+  default_rule: wolf_swing
+  rules:
+    wolf_swing:
+      stop_loss_pct: 0.07
+      take_profit_arm_pct: 0.20
+      profit_drawdown_pct: 0.30
+    hai_long:
+      swing_low_break_pct: 0.03
+      validate_days: 13
+  allow_loss_add_on_618: true
+
+alert:
+  repeat_price_change_pct: 0.01
+
+notify:
+  terminal: true
+  markdown_report: true
+
+report:
+  only_actionable: true
+  dir: ~/.stock-up/reports
+```
+
+参数说明：
+
+| 配置项 | 默认值 | 说明 |
+|---|---:|---|
+| `market.quote_source` | `akshare` | 行情源配置，当前命令多数会按命令参数选择 provider |
+| `market.limit_up_source_order` | `akshare_em`, `akshare_ths` | 涨停池数据源优先级 |
+| `market.realtime_fallback_order` | `akshare`, `qq` | 实时行情备用源顺序 |
+| `tick.trading_time_only` | `true` | 预留配置：是否只在交易时间检查 |
+| `tick.min_interval_seconds` | `20` | 建议外部定时任务调用 `tick` 的最小间隔 |
+| `limit_up.exclude_st` | `true` | 涨停扫描排除 ST |
+| `limit_up.exclude_bj` | `true` | 涨停扫描排除北交所 |
+| `limit_up.exclude_new_stock_days` | `30` | 涨停扫描排除上市天数过短的新股 |
+| `limit_up.min_amount` | `500000000` | 涨停扫描最低成交额 |
+| `limit_up.include_first_board` | `true` | 是否包含首板 |
+| `limit_up.include_multi_board` | `true` | 是否包含连板 |
+| `auto_watch.hot_leader_scan_enabled` | `false` | 每日复盘是否自动扫描热点板块龙头；默认关闭，因为接口需要 token |
+| `watch.initial_low_mode` | `same_day` | 自动加入观察时的初始低点：`same_day` 当日低点，`recent_1d` 最近 1 日低点 |
+| `watch.buy_382_tolerance` | `0.03` | 接近 0.382 回撤位的买点容忍比例 |
+| `watch.buy_618_tolerance` | `0.02` | 接近 0.618 回撤位的买点容忍比例 |
+| `watch.abandon_below_786` | `true` | 跌破 0.786 回撤位时废弃观察 |
+| `watch.abandon_below_low` | `true` | 跌破初始低点时废弃观察 |
+| `technical.rsi.enabled` | `true` | 是否启用 RSI 信号 |
+| `technical.rsi.short_period` | `6` | 短 RSI 周期 |
+| `technical.rsi.long_period` | `12` | 长 RSI 周期 |
+| `technical.rsi.min_history_days` | `30` | 本地计算 RSI 时需要的最少历史天数 |
+| `technical.rsi.max_updates_per_daily` | `50` | 每日最多更新 RSI 的股票数；先持仓，后观察 |
+| `technical.rsi.watch_golden_cross` | `true` | 观察池是否提醒 RSI 金叉 |
+| `technical.rsi.holding_dead_cross` | `true` | 持仓池是否提醒 RSI 死叉 |
+| `holding.default_rule` | `wolf_swing` | 默认持仓规则：`wolf_swing` / `hai_long` / `both` |
+| `holding.rules.wolf_swing.stop_loss_pct` | `0.07` | 狼大波段规则：成本价下跌 7% 止损 |
+| `holding.rules.wolf_swing.take_profit_arm_pct` | `0.20` | 狼大波段规则：盈利 20% 后启动移动止盈 |
+| `holding.rules.wolf_swing.profit_drawdown_pct` | `0.30` | 狼大波段规则：从最高盈利回撤 30% 止盈 |
+| `holding.rules.hai_long.swing_low_break_pct` | `0.03` | 海指导规则：跌破波段低点 3% 视为失败 |
+| `holding.rules.hai_long.validate_days` | `13` | 海指导规则：13 个交易日验证期 |
+| `holding.allow_loss_add_on_618` | `true` | 未触发止损时，允许在 0.618 附近提醒亏损加仓观察 |
+| `alert.repeat_price_change_pct` | `0.01` | 同类提醒价格变化超过 1% 才重复提醒 |
+| `notify.terminal` | `true` | 是否输出终端提醒 |
+| `notify.markdown_report` | `true` | 是否生成 Markdown 日报 |
+| `report.only_actionable` | `true` | 日报是否只显示有动作建议的股票 |
+| `report.dir` | `~/.stock-up/reports` | 日报目录 |
+
 ## 命令速查
 
 | 命令 | 用途 | 示例 |

@@ -109,9 +109,19 @@ pytest -q
 python3 -m pip install -e '.[dev,akshare]'
 ```
 
+## 配置文件
+
+默认配置文件位置：
+
+```text
+~/.stock-up/config.yaml
+```
+
+`stock-up init` 会自动创建默认配置、数据库和报告目录。完整参数说明见 [命令说明](docs/commands.md#配置文件)。
+
 ## 更多文档
 
-- [命令说明](docs/commands.md)
+- [命令说明与配置说明](docs/commands.md)
 - [StockAPI 接口说明](docs/stockapi.md)
 - [腾讯股票接口说明](docs/tencent-api.md)
 
