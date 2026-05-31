@@ -40,6 +40,7 @@ class RsiConfig(BaseModel):
     short_period: int = 6
     long_period: int = 12
     min_history_days: int = 30
+    max_updates_per_daily: int = 50
     watch_golden_cross: bool = True
     holding_dead_cross: bool = True
 

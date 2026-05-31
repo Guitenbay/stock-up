@@ -7,6 +7,7 @@ from stock_up.market.base import MarketDataProvider
 from stock_up.repositories import HoldingRepository, TradeRepository, WatchRepository
 from stock_up.services.reporter import DailyReport, write_daily_report
 from stock_up.services.rsi import latest_two_rsi, update_rsi_for_code
+from stock_up.services.rsi_budget import plan_rsi_updates
 from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
 from stock_up.strategy.holding import evaluate_holding
@@ -23,7 +24,13 @@ class DailySummary:
     holding_action_count: int
 
 
-def run_daily(db_path: Path, provider: MarketDataProvider, trade_date: str, report_dir: Path) -> DailySummary:
+def run_daily(
+    db_path: Path,
+    provider: MarketDataProvider,
+    trade_date: str,
+    report_dir: Path,
+    rsi_max_updates: int = 50,
+) -> DailySummary:
     scan_summary = run_limit_up_scan(db_path, provider, trade_date)
     run_tick(db_path, provider)
 
@@ -34,7 +41,12 @@ def run_daily(db_path: Path, provider: MarketDataProvider, trade_date: str, repo
     watch_actions: list[str] = []
     watch_items = watch_repo.list_active()
     holdings = holding_repo.list_open()
-    for code in sorted({item.code for item in watch_items} | {h.code for h in holdings}):
+    rsi_codes = plan_rsi_updates(
+        holding_codes=[h.code for h in holdings],
+        watch_codes=[item.code for item in watch_items],
+        max_updates=rsi_max_updates,
+    )
+    for code in rsi_codes:
         update_rsi_for_code(db_path, provider, code)
 
     for item in watch_items:

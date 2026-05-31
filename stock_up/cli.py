@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from stock_up.codes import format_code
-from stock_up.config import write_default_config
+from stock_up.config import load_config, write_default_config
 from stock_up.db import init_db
 from stock_up.market.factory import make_provider
 from stock_up.models import Holding, WatchItem
@@ -98,7 +98,14 @@ def daily(
 ):
     """执行每日扫描、检查并生成报告。"""
     date_text = trade_date or date.today().isoformat()
-    summary = run_daily(db_path(home), _make_provider(provider, purpose="daily"), date_text, home / "reports")
+    cfg = load_config(home / "config.yaml")
+    summary = run_daily(
+        db_path(home),
+        _make_provider(provider, purpose="daily"),
+        date_text,
+        home / "reports",
+        rsi_max_updates=cfg.technical.rsi.max_updates_per_daily,
+    )
     console.print(f"daily完成: 新增观察 {summary.new_watch_count}，观察动作 {summary.watch_action_count}，持仓动作 {summary.holding_action_count}")
     console.print(f"日报: {summary.report_path}")
 

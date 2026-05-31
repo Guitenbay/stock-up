@@ -134,6 +134,22 @@ stock-up tick --provider mock
 
 StockAPI 无 token 时会按 5 天窗口分段请求，以满足免费接口限制。
 
+RSI 日 K 数据很宝贵，`daily` 更新 RSI 时遵循：
+
+```text
+先更新持仓池
+再更新观察池
+达到 max_updates_per_daily 后停止
+```
+
+配置项：
+
+```yaml
+technical:
+  rsi:
+    max_updates_per_daily: 50
+```
+
 ## 涨停扫描
 
 ```bash
