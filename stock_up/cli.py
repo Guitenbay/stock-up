@@ -10,9 +10,11 @@ from rich.table import Table
 
 from stock_up.config import write_default_config
 from stock_up.db import init_db
+from stock_up.market.akshare_provider import AkShareProvider
 from stock_up.market.mock import MockProvider
 from stock_up.market.qq import TencentProvider
 from stock_up.models import Holding, WatchItem
+from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
 from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
 from stock_up.strategy.holding import evaluate_holding
@@ -21,8 +23,10 @@ from stock_up.strategy.watch import evaluate_watch
 app = typer.Typer(help="stock-up CLI")
 watch_app = typer.Typer(help="观察池")
 hold_app = typer.Typer(help="持仓")
+scan_app = typer.Typer(help="扫描")
 app.add_typer(watch_app, name="watch")
 app.add_typer(hold_app, name="hold")
+app.add_typer(scan_app, name="scan")
 console = Console()
 
 
@@ -55,6 +59,22 @@ def tick(
     market_provider = MockProvider() if provider == "mock" else TencentProvider()
     summary = run_tick(db_path(home), market_provider)
     console.print(f"tick完成: 观察 {summary.updated_watch_count}，持仓 {summary.updated_holding_count}")
+
+
+@scan_app.command("limit-up")
+def scan_limit_up(
+    home: Path = typer.Option(default_home(), "--home"),
+    provider: str = typer.Option("akshare", "--provider", help="akshare / mock"),
+    trade_date: str = typer.Option("", "--date"),
+):
+    """扫描涨停池并加入观察池。"""
+    date_text = trade_date or date.today().isoformat()
+    if provider == "mock":
+        market_provider = MockProvider(limit_up_pool=[])
+    else:
+        market_provider = AkShareProvider()
+    summary = run_limit_up_scan(db_path(home), market_provider, date_text)
+    console.print(f"涨停扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}，跳过 {summary.skipped_count}")
 
 
 @watch_app.command("add")
