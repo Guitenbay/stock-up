@@ -141,6 +141,28 @@ stock-up init
 stock-up init --home /tmp/stock-up-demo
 ```
 
+## 命令速查
+
+| 命令 | 用途 | 示例 |
+|---|---|---|
+| `stock-up init` | 初始化配置、数据库和报告目录 | `stock-up init` |
+| `stock-up tick` | 执行一次盘中检查，由定时任务调用 | `stock-up tick` |
+| `stock-up daily` | 收盘后生成每日复盘报告 | `stock-up daily` |
+| `stock-up quote CODE` | 查看单只股票行情 | `stock-up quote 300308` |
+| `stock-up watch list` | 查看观察池 | `stock-up watch list` |
+| `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
+| `stock-up watch abandoned` | 查看废弃观察池 | `stock-up watch abandoned` |
+| `stock-up watch add CODE` | 手动加入观察池 | `stock-up watch add 300308 --name 中际旭创 --high 130 --low 110` |
+| `stock-up watch set CODE` | 修正观察股高低点 | `stock-up watch set 300308 --high 135 --low 112` |
+| `stock-up hold add CODE` | 添加持仓 | `stock-up hold add 300308 --cost 120 --qty 100 --rule both` |
+| `stock-up hold list` | 查看持仓 | `stock-up hold list` |
+| `stock-up hold check` | 检查持仓信号 | `stock-up hold check` |
+| `stock-up hold set CODE` | 修正持仓参数 | `stock-up hold set 300308 --highest 150 --rule hai_long` |
+| `stock-up hold add-buy CODE` | 记录加仓并更新加权成本 | `stock-up hold add-buy 300308 --price 125 --qty 100` |
+| `stock-up hold close CODE` | 关闭持仓 | `stock-up hold close 300308 --price 135 --reason 止盈` |
+| `stock-up scan dragon-tiger` | 扫描龙虎榜并加入观察池 | `stock-up scan dragon-tiger --date 2026-05-29` |
+| `stock-up scan limit-up` | 扫描涨停池并加入观察池 | `stock-up scan limit-up --date 2026-05-29` |
+
 ## 观察池
 
 手动加入观察：
