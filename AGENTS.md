@@ -130,6 +130,12 @@ stock-up tick
 stock-up daily
 ```
 
+`daily` 是普通用户主要依赖的自动入口。它会在每日复盘时检查配置，并把符合扫描策略的股票加入观察池：
+
+- 当前默认不会自动加入热点板块龙头，因为 `auto_watch.hot_leader_scan_enabled` 默认为 `false`。
+- 如果开启 `auto_watch.hot_leader_scan_enabled: true`，`daily` 会尝试扫描热点板块龙头并加入观察池。
+- 手动扫描命令 `stock-up scan dragon-tiger` 和 `stock-up scan limit-up` 也会把扫描结果加入观察池。
+
 日报输出：
 
 ```text
@@ -161,7 +167,7 @@ stock-up hold close 300308 --price 135 --reason 止盈 --watch
 | `stock-up init` | 初始化配置、数据库、报告目录 |
 | `stock-up quote CODE` | 查看单只股票实时行情 |
 | `stock-up tick` | 执行一次盘中检查 |
-| `stock-up daily` | 执行每日复盘并生成报告 |
+| `stock-up daily` | 执行每日复盘并生成报告；会按配置尝试自动加入观察池 |
 | `stock-up watch add CODE` | 手动加入观察池 |
 | `stock-up watch list` | 查看观察池 |
 | `stock-up watch check` | 检查观察池信号 |

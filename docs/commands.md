@@ -150,7 +150,7 @@ report:
 |---|---|---|
 | `stock-up init` | 初始化配置、数据库和报告目录 | `stock-up init` |
 | `stock-up tick` | 执行一次盘中检查，由定时任务调用 | `stock-up tick` |
-| `stock-up daily` | 收盘后生成每日复盘报告 | `stock-up daily` |
+| `stock-up daily` | 收盘后生成每日复盘报告；会按配置尝试自动加入观察池 | `stock-up daily` |
 | `stock-up quote CODE` | 查看单只股票行情 | `stock-up quote 300308` |
 | `stock-up watch list` | 查看观察池 | `stock-up watch list` |
 | `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
@@ -253,6 +253,27 @@ stock-up tick --provider mock
 ```
 
 建议外部定时任务每 20 秒调用一次。
+
+## 自动加入观察池
+
+以下命令会把股票加入观察池：
+
+| 命令 | 触发方式 | 说明 |
+|---|---|---|
+| `stock-up watch add CODE` | 手动 | 手动指定股票加入观察池 |
+| `stock-up daily` | 自动，按配置 | 每日复盘时会按配置尝试扫描并加入观察池；当前热点板块龙头策略默认关闭 |
+| `stock-up scan dragon-tiger` | 手动扫描 | 扫描龙虎榜并加入观察池 |
+| `stock-up scan limit-up` | 手动扫描 | 扫描涨停池并加入观察池 |
+| `stock-up hold close CODE --watch` | 手动 | 关闭持仓后重新加入观察池 |
+
+`daily` 的自动观察逻辑由配置控制：
+
+```yaml
+auto_watch:
+  hot_leader_scan_enabled: false
+```
+
+默认值是 `false`，所以普通执行 `stock-up daily` 时不会自动扫描热点板块龙头。改成 `true` 后，`daily` 会尝试扫描热点板块龙头并加入观察池。
 
 ## 数据源
 
