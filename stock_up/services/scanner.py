@@ -6,6 +6,7 @@ from pathlib import Path
 from stock_up.market.base import MarketDataProvider
 from stock_up.models import LimitUpStock, WatchItem
 from stock_up.repositories import WatchRepository
+from stock_up.services.initial_low import InitialLowMode, choose_initial_low
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ def run_limit_up_scan(
     provider: MarketDataProvider,
     trade_date: str,
     filters: LimitUpFilter | None = None,
+    initial_low_mode: InitialLowMode = "same_day",
 ) -> ScanSummary:
     filters = filters or LimitUpFilter()
     pool = provider.get_limit_up_pool(trade_date)
@@ -38,12 +40,13 @@ def run_limit_up_scan(
         if not _passes(stock, filters):
             skipped += 1
             continue
+        recent_bars = provider.get_daily_bars(stock.code, 1) if initial_low_mode == "recent_1d" else []
         repo.upsert(WatchItem(
             code=stock.code,
             name=stock.name,
             reason=stock.reason or "涨停池",
             high=stock.high,
-            low=stock.low,
+            low=choose_initial_low(stock, recent_bars, initial_low_mode),
             now=stock.close,
             status="watching",
         ))

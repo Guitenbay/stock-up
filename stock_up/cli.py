@@ -88,10 +88,11 @@ def scan_limit_up(
     home: Path = typer.Option(default_home(), "--home"),
     provider: str = typer.Option("akshare", "--provider", help="akshare / mock"),
     trade_date: str = typer.Option("", "--date"),
+    low_mode: str = typer.Option("same_day", "--low-mode"),
 ):
     """扫描涨停池并加入观察池。"""
     date_text = trade_date or date.today().isoformat()
-    summary = run_limit_up_scan(db_path(home), _make_provider(provider), date_text)
+    summary = run_limit_up_scan(db_path(home), _make_provider(provider), date_text, initial_low_mode=low_mode)  # type: ignore[arg-type]
     console.print(f"涨停扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}，跳过 {summary.skipped_count}")
 
 
