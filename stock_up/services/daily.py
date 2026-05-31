@@ -9,8 +9,9 @@ from stock_up.services.reporter import DailyReport, write_daily_report
 from stock_up.services.rsi import latest_two_rsi, update_rsi_for_code
 from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
-from stock_up.strategy.technical import detect_rsi_cross
 from stock_up.strategy.holding import evaluate_holding
+from stock_up.strategy.technical import detect_rsi_cross
+from stock_up.strategy.trading_day import trading_days_since
 from stock_up.strategy.watch import evaluate_watch
 
 
@@ -48,7 +49,8 @@ def run_daily(db_path: Path, provider: MarketDataProvider, trade_date: str, repo
 
     holding_actions: list[str] = []
     for h in holdings:
-        result = evaluate_holding(h, trading_days_since_buy=None)
+        days = trading_days_since(h.buy_date, trade_date) if h.buy_date else None
+        result = evaluate_holding(h, trading_days_since_buy=days)
         if result.action in ("stop_loss", "take_profit"):
             holding_actions.append(f"{h.code} {h.name}: {result.title}；{'；'.join(result.reasons)}")
         rsi_pair = latest_two_rsi(db_path, h.code)

@@ -19,6 +19,7 @@ from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
 from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
 from stock_up.strategy.holding import evaluate_holding
+from stock_up.strategy.trading_day import trading_days_since
 from stock_up.strategy.watch import evaluate_watch
 
 app = typer.Typer(help="stock-up CLI")
@@ -255,17 +256,21 @@ def hold_close(
 
 
 @hold_app.command("check")
-def hold_check(home: Path = typer.Option(default_home(), "--home")):
+def hold_check(
+    home: Path = typer.Option(default_home(), "--home"),
+    today: str = typer.Option("", "--today"),
+):
     repo = HoldingRepository(db_path(home))
     alerts = AlertRepository(db_path(home))
     table = Table("代码", "名称", "动作", "理由")
-    today = date.today().isoformat()
+    today_text = today or date.today().isoformat()
     for h in repo.list_open():
-        result = evaluate_holding(h, trading_days_since_buy=None)
+        days = trading_days_since(h.buy_date, today_text) if h.buy_date else None
+        result = evaluate_holding(h, trading_days_since_buy=days)
         reasons = "; ".join(result.reasons) if result.reasons else "暂无动作"
         if alerts.should_alert(h.code, result.title, result.price or h.now or h.cost, 0.01):
             table.add_row(h.code, h.name, result.title, reasons)
-            alerts.record(h.code, h.name, result.title, result.level, result.price or h.now or h.cost, reasons, today)
+            alerts.record(h.code, h.name, result.title, result.level, result.price or h.now or h.cost, reasons, today_text)
     console.print(table)
 
 
