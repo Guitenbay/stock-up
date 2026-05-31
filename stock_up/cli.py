@@ -10,7 +10,10 @@ from rich.table import Table
 
 from stock_up.config import write_default_config
 from stock_up.db import init_db
+from stock_up.market.mock import MockProvider
+from stock_up.market.qq import TencentProvider
 from stock_up.models import Holding, WatchItem
+from stock_up.services.tick import run_tick
 from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
 from stock_up.strategy.holding import evaluate_holding
 from stock_up.strategy.watch import evaluate_watch
@@ -41,6 +44,17 @@ def init(home: Path = typer.Option(default_home(), "--home", help="stock-up home
     (home / "reports").mkdir(exist_ok=True)
     init_db(db_path(home))
     console.print(f"初始化完成: {home}")
+
+
+@app.command()
+def tick(
+    home: Path = typer.Option(default_home(), "--home"),
+    provider: str = typer.Option("qq", "--provider", help="qq / mock"),
+):
+    """执行一次盘中检查，由外部定时任务调用。"""
+    market_provider = MockProvider() if provider == "mock" else TencentProvider()
+    summary = run_tick(db_path(home), market_provider)
+    console.print(f"tick完成: 观察 {summary.updated_watch_count}，持仓 {summary.updated_holding_count}")
 
 
 @watch_app.command("add")
