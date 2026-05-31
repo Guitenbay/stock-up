@@ -206,6 +206,13 @@ stock-up hold close 300308 --price 135 --reason 止盈 --watch
 关键配置：
 
 ```yaml
+market:
+  default_provider: auto
+  realtime_provider: auto
+  daily_provider: auto
+  dragon_tiger_provider: auto
+  limit_up_provider: auto
+
 technical:
   rsi:
     enabled: true

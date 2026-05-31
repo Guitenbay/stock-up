@@ -39,13 +39,18 @@ stock-up init --home /tmp/stock-up-demo
 
 ```yaml
 market:
-  quote_source: akshare
+  default_provider: auto
+  realtime_provider: auto
+  daily_provider: auto
+  dragon_tiger_provider: auto
+  limit_up_provider: auto
+  quote_source: auto
   limit_up_source_order:
     - akshare_em
     - akshare_ths
   realtime_fallback_order:
-    - akshare
     - qq
+    - akshare
 
 tick:
   trading_time_only: true
@@ -108,9 +113,14 @@ report:
 
 | 配置项 | 默认值 | 说明 |
 |---|---:|---|
-| `market.quote_source` | `akshare` | 行情源配置，当前命令多数会按命令参数选择 provider |
+| `market.default_provider` | `auto` | 通用默认数据源 |
+| `market.realtime_provider` | `auto` | 实时行情默认数据源；`auto` 会走腾讯 |
+| `market.daily_provider` | `auto` | 每日复盘默认数据源；`auto` 会走 StockAPI |
+| `market.dragon_tiger_provider` | `auto` | 龙虎榜默认数据源；`auto` 会走 StockAPI |
+| `market.limit_up_provider` | `auto` | 涨停池默认数据源；`auto` 会走 AkShare |
+| `market.quote_source` | `auto` | 兼容旧配置的行情源字段 |
 | `market.limit_up_source_order` | `akshare_em`, `akshare_ths` | 涨停池数据源优先级 |
-| `market.realtime_fallback_order` | `akshare`, `qq` | 实时行情备用源顺序 |
+| `market.realtime_fallback_order` | `qq`, `akshare` | 实时行情备用源顺序 |
 | `tick.trading_time_only` | `true` | 预留配置：是否只在交易时间检查 |
 | `tick.min_interval_seconds` | `20` | 建议外部定时任务调用 `tick` 的最小间隔 |
 | `limit_up.exclude_st` | `true` | 涨停扫描排除 ST |

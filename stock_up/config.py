@@ -8,9 +8,14 @@ from pydantic import BaseModel, Field
 
 
 class MarketConfig(BaseModel):
-    quote_source: Literal["akshare", "qq"] = "akshare"
+    default_provider: Literal["auto", "stockapi", "akshare", "qq"] = "auto"
+    realtime_provider: Literal["auto", "qq", "akshare"] = "auto"
+    daily_provider: Literal["auto", "stockapi"] = "auto"
+    dragon_tiger_provider: Literal["auto", "stockapi"] = "auto"
+    limit_up_provider: Literal["auto", "akshare"] = "auto"
+    quote_source: Literal["auto", "akshare", "qq"] = "auto"
     limit_up_source_order: list[str] = Field(default_factory=lambda: ["akshare_em", "akshare_ths"])
-    realtime_fallback_order: list[str] = Field(default_factory=lambda: ["akshare", "qq"])
+    realtime_fallback_order: list[str] = Field(default_factory=lambda: ["qq", "akshare"])
 
 
 class TickConfig(BaseModel):

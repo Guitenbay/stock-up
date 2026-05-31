@@ -56,6 +56,25 @@ def _make_provider(provider: str, purpose: str = "realtime"):
     return make_provider(provider, purpose=purpose)
 
 
+def _provider_from_config(home: Path, purpose: str) -> str:
+    cfg = load_config(home / "config.yaml")
+    if purpose == "realtime":
+        return cfg.market.realtime_provider
+    if purpose == "daily":
+        return cfg.market.daily_provider
+    if purpose == "dragon_tiger":
+        return cfg.market.dragon_tiger_provider
+    if purpose == "limit_up":
+        return cfg.market.limit_up_provider
+    return cfg.market.default_provider
+
+
+def _resolve_provider(home: Path, provider: str, purpose: str) -> str:
+    if provider != "config":
+        return provider
+    return _provider_from_config(home, purpose)
+
+
 def _resolve_stock_name(code: str, provided_name: str, provider: str = "qq") -> str:
     if provided_name:
         return provided_name
@@ -72,11 +91,13 @@ def _resolve_stock_name(code: str, provided_name: str, provider: str = "qq") -> 
 @app.command()
 def quote(
     code: str,
-    provider: str = typer.Option("qq", "--provider", help="qq / akshare / mock"),
+    home: Path = typer.Option(default_home(), "--home"),
+    provider: str = typer.Option("config", "--provider", help="config / auto / qq / akshare / mock"),
 ):
     """查看单只股票行情，便于对比数据源。"""
     full_code = format_code(code) or code
-    quotes = _make_provider(provider, purpose="realtime").get_realtime_quotes([full_code])
+    provider_name = _resolve_provider(home, provider, "realtime")
+    quotes = _make_provider(provider_name, purpose="realtime").get_realtime_quotes([full_code])
     if not quotes:
         console.print(f"暂无行情: {full_code}")
         return
@@ -97,25 +118,27 @@ def quote(
 @app.command()
 def tick(
     home: Path = typer.Option(default_home(), "--home"),
-    provider: str = typer.Option("qq", "--provider", help="qq / mock"),
+    provider: str = typer.Option("config", "--provider", help="config / auto / qq / mock"),
 ):
     """执行一次盘中检查，由外部定时任务调用。"""
-    summary = run_tick(db_path(home), _make_provider(provider))
+    provider_name = _resolve_provider(home, provider, "realtime")
+    summary = run_tick(db_path(home), _make_provider(provider_name, purpose="realtime"))
     console.print(f"tick完成: 观察 {summary.updated_watch_count}，持仓 {summary.updated_holding_count}")
 
 
 @app.command()
 def daily(
     home: Path = typer.Option(default_home(), "--home"),
-    provider: str = typer.Option("auto", "--provider", help="auto / stockapi / mock"),
+    provider: str = typer.Option("config", "--provider", help="config / auto / stockapi / mock"),
     trade_date: str = typer.Option("", "--date"),
 ):
     """执行每日扫描、检查并生成报告。"""
     date_text = trade_date or date.today().isoformat()
     cfg = load_config(home / "config.yaml")
+    provider_name = _resolve_provider(home, provider, "daily")
     summary = run_daily(
         db_path(home),
-        _make_provider(provider, purpose="daily"),
+        _make_provider(provider_name, purpose="daily"),
         date_text,
         home / "reports",
         rsi_max_updates=cfg.technical.rsi.max_updates_per_daily,
@@ -129,25 +152,27 @@ def daily(
 @scan_app.command("dragon-tiger")
 def scan_dragon_tiger(
     home: Path = typer.Option(default_home(), "--home"),
-    provider: str = typer.Option("stockapi", "--provider", help="stockapi / mock"),
+    provider: str = typer.Option("config", "--provider", help="config / auto / stockapi / mock"),
     trade_date: str = typer.Option("", "--date"),
 ):
     """扫描龙虎榜并加入观察池。"""
     date_text = trade_date or date.today().isoformat()
-    summary = run_dragon_tiger_scan(db_path(home), _make_provider(provider, purpose="scan"), date_text)
+    provider_name = _resolve_provider(home, provider, "dragon_tiger")
+    summary = run_dragon_tiger_scan(db_path(home), _make_provider(provider_name, purpose="scan"), date_text)
     console.print(f"龙虎榜扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}")
 
 
 @scan_app.command("limit-up")
 def scan_limit_up(
     home: Path = typer.Option(default_home(), "--home"),
-    provider: str = typer.Option("akshare", "--provider", help="akshare / mock"),
+    provider: str = typer.Option("config", "--provider", help="config / auto / akshare / mock"),
     trade_date: str = typer.Option("", "--date"),
     low_mode: str = typer.Option("same_day", "--low-mode"),
 ):
     """扫描涨停池并加入观察池。"""
     date_text = trade_date or date.today().isoformat()
-    summary = run_limit_up_scan(db_path(home), _make_provider(provider, purpose="scan"), date_text, initial_low_mode=low_mode)  # type: ignore[arg-type]
+    provider_name = _resolve_provider(home, provider, "limit_up")
+    summary = run_limit_up_scan(db_path(home), _make_provider(provider_name, purpose="scan"), date_text, initial_low_mode=low_mode)  # type: ignore[arg-type]
     console.print(f"涨停扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}，跳过 {summary.skipped_count}")
 
 

@@ -5,7 +5,12 @@ from stock_up.config import AppConfig, load_config, write_default_config
 
 def test_default_config_values():
     cfg = AppConfig()
-    assert cfg.market.quote_source == "akshare"
+    assert cfg.market.default_provider == "auto"
+    assert cfg.market.realtime_provider == "auto"
+    assert cfg.market.daily_provider == "auto"
+    assert cfg.market.dragon_tiger_provider == "auto"
+    assert cfg.market.limit_up_provider == "auto"
+    assert cfg.market.quote_source == "auto"
     assert cfg.tick.min_interval_seconds == 20
     assert cfg.holding.default_rule == "wolf_swing"
     assert cfg.auto_watch.dragon_tiger_scan_enabled is True

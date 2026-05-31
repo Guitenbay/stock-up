@@ -15,7 +15,7 @@ def test_daily_mock_runs(tmp_path):
     assert (home / "reports" / "2026-05-31.md").exists()
 
 
-def test_daily_default_provider_is_auto():
+def test_daily_default_provider_uses_config():
     result = runner.invoke(app, ["daily", "--help"])
     assert result.exit_code == 0
-    assert "[default: auto]" in result.stdout
+    assert "[default: config]" in result.stdout
