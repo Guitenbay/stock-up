@@ -79,6 +79,20 @@ class HotLeader:
     jlrts: int = 0
 
 
+@dataclass(frozen=True)
+class DragonTigerStock:
+    code: str
+    name: str
+    trade_date: str
+    reason: str = ""
+    close: float = 0.0
+    chg: float = 0.0
+    turnover: float = 0.0
+    buy_amount: float = 0.0
+    sell_amount: float = 0.0
+    top_amount: float = 0.0
+
+
 @dataclass
 class WatchItem:
     code: str

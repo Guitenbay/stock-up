@@ -14,6 +14,7 @@ from stock_up.db import init_db
 from stock_up.market.factory import make_provider
 from stock_up.models import Holding, WatchItem
 from stock_up.services.daily import run_daily
+from stock_up.services.dragon_tiger_scanner import run_dragon_tiger_scan
 from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
 from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
@@ -109,6 +110,18 @@ def daily(
     )
     console.print(f"daily完成: 新增观察 {summary.new_watch_count}，观察动作 {summary.watch_action_count}，持仓动作 {summary.holding_action_count}")
     console.print(f"日报: {summary.report_path}")
+
+
+@scan_app.command("dragon-tiger")
+def scan_dragon_tiger(
+    home: Path = typer.Option(default_home(), "--home"),
+    provider: str = typer.Option("stockapi", "--provider", help="stockapi / mock"),
+    trade_date: str = typer.Option("", "--date"),
+):
+    """扫描龙虎榜并加入观察池。"""
+    date_text = trade_date or date.today().isoformat()
+    summary = run_dragon_tiger_scan(db_path(home), _make_provider(provider, purpose="scan"), date_text)
+    console.print(f"龙虎榜扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}")
 
 
 @scan_app.command("limit-up")

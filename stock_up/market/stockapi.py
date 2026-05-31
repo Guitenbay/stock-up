@@ -5,13 +5,14 @@ from datetime import date, timedelta
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from stock_up.models import DailyBar, HotBoard, HotLeader, LimitUpStock, Quote
+from stock_up.models import DailyBar, DragonTigerStock, HotBoard, HotLeader, LimitUpStock, Quote
 
 
 BASE_URL = "https://www.stockapi.com.cn/v1/base/day"
 RSI_URL = "https://www.stockapi.com.cn/v1/quota/rsi2"
 HOT_BOARD_URL = "https://www.stockapi.com.cn/v1/hotBkJlrDr"
 HOT_LEADER_URL = "https://www.stockapi.com.cn/v1/hotBkJlrLongTou"
+DRAGON_TIGER_URL = "https://www.stockapi.com.cn/v1/base/dragonTiger"
 
 
 def build_date_windows(start: date, end: date, max_days: int = 5) -> list[tuple[str, str]]:
@@ -87,6 +88,65 @@ def parse_hot_leaders(payload: dict) -> list[HotLeader]:
             trade_date=str(item.get("time", "")),
             qjzf=_to_float(item.get("qjzf")),
             jlrts=_to_int(item.get("jlrts")),
+        ))
+    return [row for row in rows if row.code]
+
+
+def parse_dragon_tiger(payload: dict) -> list[DragonTigerStock]:
+    if payload.get("code") != 20000:
+        return []
+    data = payload.get("data") or {}
+    if isinstance(data, list):
+        return _parse_dragon_tiger_row_list(data)
+    if isinstance(data, dict):
+        return _parse_dragon_tiger_array_object(data)
+    return []
+
+
+def _parse_dragon_tiger_row_list(data: list) -> list[DragonTigerStock]:
+    rows: list[DragonTigerStock] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        rows.append(DragonTigerStock(
+            code=str(item.get("thsCode") or item.get("code") or ""),
+            name=str(item.get("name", "")),
+            trade_date=str(item.get("endDate") or item.get("date") or ""),
+            reason=str(item.get("reason", "")),
+            close=_to_float(item.get("close")),
+            chg=_to_float(item.get("chg")),
+            turnover=_to_float(item.get("turnover")),
+            buy_amount=_to_float(item.get("buyAmount")),
+            sell_amount=_to_float(item.get("sellAmount")),
+            top_amount=_to_float(item.get("topAmount")),
+        ))
+    return [row for row in rows if row.code]
+
+
+def _parse_dragon_tiger_array_object(data: dict) -> list[DragonTigerStock]:
+    codes = data.get("thsCode") or data.get("code") or []
+    names = data.get("name") or []
+    reasons = data.get("reason") or []
+    closes = data.get("close") or []
+    chgs = data.get("chg") or []
+    turnovers = data.get("turnover") or []
+    buys = data.get("buyAmount") or []
+    sells = data.get("sellAmount") or []
+    tops = data.get("topAmount") or []
+    dates = data.get("endDate") or data.get("date") or []
+    rows: list[DragonTigerStock] = []
+    for idx, code in enumerate(codes):
+        rows.append(DragonTigerStock(
+            code=str(code),
+            name=str(names[idx]) if idx < len(names) else "",
+            trade_date=str(dates[idx]) if idx < len(dates) else "",
+            reason=str(reasons[idx]) if idx < len(reasons) else "",
+            close=_to_float(closes[idx] if idx < len(closes) else 0),
+            chg=_to_float(chgs[idx] if idx < len(chgs) else 0),
+            turnover=_to_float(turnovers[idx] if idx < len(turnovers) else 0),
+            buy_amount=_to_float(buys[idx] if idx < len(buys) else 0),
+            sell_amount=_to_float(sells[idx] if idx < len(sells) else 0),
+            top_amount=_to_float(tops[idx] if idx < len(tops) else 0),
         ))
     return [row for row in rows if row.code]
 
@@ -251,6 +311,18 @@ class StockApiProvider:
 
     def get_trade_calendar(self) -> list[str]:
         return []
+
+    def get_dragon_tiger(self, trade_date: str) -> list[DragonTigerStock]:
+        params = {"date": trade_date}
+        if self.token:
+            params["token"] = self.token
+        try:
+            req = Request(DRAGON_TIGER_URL + "?" + urlencode(params), headers={"User-Agent": "Mozilla/5.0"})
+            with urlopen(req, timeout=10) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            return []
+        return parse_dragon_tiger(payload)
 
     def get_hot_boards(self, trade_date: str) -> list[HotBoard]:
         params = {"date": trade_date}

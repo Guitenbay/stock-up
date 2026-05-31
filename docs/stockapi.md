@@ -244,7 +244,60 @@ auto_watch:
 
 ---
 
-## 6. 数据源优先级建议
+## 6. 龙虎榜接口
+
+接口：
+
+```text
+GET https://www.stockapi.com.cn/v1/base/dragonTiger
+```
+
+请求参数：
+
+| 参数 | 必填 | 说明 | 示例 |
+|---|---|---|---|
+| date | 是 | 交易日期 | 2021-11-09 |
+
+文档响应格式：
+
+```json
+{
+  "msg": "success",
+  "code": 20000,
+  "data": {
+    "totalVolume": [],
+    "reason": [],
+    "chg": [],
+    "endDate": [],
+    "sellAmountRatio": [],
+    "topAmount": [],
+    "buyAmountRatio": [],
+    "totalAmount": [],
+    "thsCode": [],
+    "buyAmount": [],
+    "sellAmount": [],
+    "name": [],
+    "close": [],
+    "turnover": []
+  }
+}
+```
+
+`stock-up` 支持：
+
+```bash
+stock-up scan dragon-tiger --date 2026-05-29
+```
+
+会将龙虎榜股票加入观察池，原因格式：
+
+```text
+龙虎榜: <上榜原因>
+```
+
+---
+
+## 7. 数据源优先级建议
 
 ```yaml
 market:
@@ -263,5 +316,5 @@ StockAPI RSI 专用接口 -> 本地日 K 计算 fallback
 观察池自动加入：
 
 ```text
-StockAPI 热点板块 -> StockAPI 热点板块龙头股
+默认关闭热点板块龙头；可手动扫描龙虎榜或涨停池
 ```
