@@ -1,0 +1,42 @@
+from stock_up.models import SignalResult, WatchItem
+from stock_up.strategy.fib import calculate_fib_levels
+
+
+def evaluate_watch(item: WatchItem, buy_382_tolerance: float = 0.03, buy_618_tolerance: float = 0.02) -> SignalResult:
+    levels = calculate_fib_levels(item.high, item.low)
+    now = item.now
+
+    if now <= levels.f786 or now < item.low:
+        return SignalResult(
+            action="abandon",
+            title="放弃/移入废弃",
+            reasons=[f"当前价 {now:.3f} 跌破 f786 {levels.f786:.3f} 或阶段低点 {item.low:.3f}"],
+            level="danger",
+            price=now,
+        )
+
+    if now <= levels.f618 * (1 + buy_618_tolerance):
+        return SignalResult(
+            action="watch",
+            title="谨慎小仓，仅强防试错",
+            reasons=[f"当前价 {now:.3f} 接近 0.618 强防线 {levels.f618:.3f}"],
+            level="warning",
+            price=now,
+        )
+
+    if now <= levels.f382 * (1 + buy_382_tolerance) and now > levels.f618:
+        return SignalResult(
+            action="watch",
+            title="可小仓试错",
+            reasons=[f"当前价 {now:.3f} 接近 0.382 常规买点 {levels.f382:.3f}"],
+            level="info",
+            price=now,
+        )
+
+    return SignalResult(
+        action="hold",
+        title="谨慎观察，不追",
+        reasons=["尚未到策略买点"],
+        level="info",
+        price=now,
+    )

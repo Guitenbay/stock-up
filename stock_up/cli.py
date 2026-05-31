@@ -11,7 +11,9 @@ from rich.table import Table
 from stock_up.config import write_default_config
 from stock_up.db import init_db
 from stock_up.models import Holding, WatchItem
-from stock_up.repositories import HoldingRepository, TradeRepository, WatchRepository
+from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
+from stock_up.strategy.holding import evaluate_holding
+from stock_up.strategy.watch import evaluate_watch
 
 app = typer.Typer(help="stock-up CLI")
 watch_app = typer.Typer(help="观察池")
@@ -73,6 +75,22 @@ def watch_abandoned(home: Path = typer.Option(default_home(), "--home")):
     table = Table("代码", "名称", "状态")
     for item in rows:
         table.add_row(item.code, item.name, item.status)
+    console.print(table)
+
+
+@watch_app.command("check")
+def watch_check(home: Path = typer.Option(default_home(), "--home")):
+    repo = WatchRepository(db_path(home))
+    alerts = AlertRepository(db_path(home))
+    table = Table("代码", "名称", "动作", "理由")
+    today = date.today().isoformat()
+    for item in repo.list_active():
+        result = evaluate_watch(item)
+        if result.action in ("watch", "abandon") and alerts.should_alert(item.code, result.title, result.price, 0.01):
+            table.add_row(item.code, item.name, result.title, "; ".join(result.reasons))
+            alerts.record(item.code, item.name, result.title, result.level, result.price, "; ".join(result.reasons), today)
+            if result.action == "abandon":
+                repo.mark_abandoned(item.code, "; ".join(result.reasons), today)
     console.print(table)
 
 
@@ -183,6 +201,21 @@ def hold_close(
     if watch:
         WatchRepository(db_path(home)).upsert(WatchItem(code=code, name=h.name, reason=f"卖出后重新观察: {reason}", high=h.high, low=h.low, now=price))
     console.print(f"已关闭持仓: {code} 已实现盈亏 {closed.realized_pnl:g}")
+
+
+@hold_app.command("check")
+def hold_check(home: Path = typer.Option(default_home(), "--home")):
+    repo = HoldingRepository(db_path(home))
+    alerts = AlertRepository(db_path(home))
+    table = Table("代码", "名称", "动作", "理由")
+    today = date.today().isoformat()
+    for h in repo.list_open():
+        result = evaluate_holding(h, trading_days_since_buy=None)
+        reasons = "; ".join(result.reasons) if result.reasons else "暂无动作"
+        if alerts.should_alert(h.code, result.title, result.price or h.now or h.cost, 0.01):
+            table.add_row(h.code, h.name, result.title, reasons)
+            alerts.record(h.code, h.name, result.title, result.level, result.price or h.now or h.cost, reasons, today)
+    console.print(table)
 
 
 @hold_app.command("set")

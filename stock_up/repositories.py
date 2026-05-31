@@ -171,6 +171,38 @@ def _holding_from_row(row: Any) -> Holding:
     )
 
 
+class AlertRepository:
+    def __init__(self, db_path: Path):
+        self.db_path = db_path
+
+    def latest(self, code: str, signal_type: str):
+        with connect(self.db_path) as conn:
+            return conn.execute(
+                "SELECT * FROM alerts WHERE code=? AND signal_type=? ORDER BY id DESC LIMIT 1",
+                (code, signal_type),
+            ).fetchone()
+
+    def should_alert(self, code: str, signal_type: str, price: float, threshold: float) -> bool:
+        row = self.latest(code, signal_type)
+        if not row:
+            return True
+        last_price = row["price"] or 0
+        if last_price <= 0:
+            return True
+        return abs(price - last_price) / last_price >= threshold
+
+    def record(self, code: str, name: str, signal_type: str, level: str, price: float, message: str, trade_date: str) -> None:
+        with connect(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO alerts(code, name, signal_type, level, price, message, trade_date, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (code, name, signal_type, level, price, message, trade_date, _now()),
+            )
+            conn.commit()
+
+
 class TradeRepository:
     def __init__(self, db_path: Path):
         self.db_path = db_path
