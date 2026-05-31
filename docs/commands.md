@@ -157,9 +157,9 @@ report:
 | `stock-up watch list` | 查看观察池 | `stock-up watch list` |
 | `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
 | `stock-up watch abandoned` | 查看废弃观察池 | `stock-up watch abandoned` |
-| `stock-up watch add CODE` | 手动加入观察池 | `stock-up watch add 300308 --name 中际旭创 --high 130 --low 110` |
+| `stock-up watch add CODE` | 手动加入观察池；不传 `--name` 时会尝试自动获取股票名 | `stock-up watch add 300308 --high 130 --low 110` |
 | `stock-up watch set CODE` | 修正观察股高低点 | `stock-up watch set 300308 --high 135 --low 112` |
-| `stock-up hold add CODE` | 添加持仓 | `stock-up hold add 300308 --cost 120 --qty 100 --rule both` |
+| `stock-up hold add CODE` | 添加持仓；不传 `--name` 时会尝试自动获取股票名 | `stock-up hold add 300308 --cost 120 --qty 100 --rule both` |
 | `stock-up hold list` | 查看持仓 | `stock-up hold list` |
 | `stock-up hold check` | 检查持仓信号 | `stock-up hold check` |
 | `stock-up hold set CODE` | 修正持仓参数 | `stock-up hold set 300308 --highest 150 --rule hai_long` |
@@ -171,6 +171,14 @@ report:
 ## 观察池
 
 手动加入观察：
+
+```bash
+stock-up watch add 300308 --high 130 --low 110 --now 120
+```
+
+不传 `--name` 时，会尝试通过实时行情接口自动获取股票名；获取失败时使用股票代码兜底。
+
+如果想手动指定名称：
 
 ```bash
 stock-up watch add 300308 --name 中际旭创 --high 130 --low 110 --now 120
@@ -203,6 +211,14 @@ stock-up watch set 300308 --high 135 --low 112
 ## 持仓
 
 添加持仓：
+
+```bash
+stock-up hold add 300308 --cost 120 --qty 100 --rule wolf_swing
+```
+
+不传 `--name` 时，会尝试通过实时行情接口自动获取股票名；获取失败时使用股票代码兜底。
+
+如果想手动指定名称：
 
 ```bash
 stock-up hold add 300308 --name 中际旭创 --cost 120 --qty 100 --rule wolf_swing
@@ -296,6 +312,7 @@ auto_watch:
 
 ```text
 实时行情：腾讯 qt.gtimg.cn
+每日复盘：StockAPI
 自动加入观察：默认开启龙虎榜；热点板块龙头暂不能使用
 日 K / RSI：StockAPI，失败再尝试其他源
 ```

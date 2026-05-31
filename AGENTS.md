@@ -130,7 +130,7 @@ stock-up tick
 stock-up daily
 ```
 
-`daily` 是普通用户主要依赖的自动入口，默认会自动扫描龙虎榜并把股票加入观察池。
+`daily` 是普通用户主要依赖的自动入口，默认使用 StockAPI，自动扫描龙虎榜并把股票加入观察池。
 
 当前自动加入观察池的策略状态：
 
@@ -172,13 +172,13 @@ stock-up hold close 300308 --price 135 --reason 止盈 --watch
 | `stock-up init` | 初始化配置、数据库、报告目录 |
 | `stock-up quote CODE` | 查看单只股票实时行情 |
 | `stock-up tick` | 执行一次盘中检查 |
-| `stock-up daily` | 执行每日复盘并生成报告；默认自动扫描龙虎榜并加入观察池 |
-| `stock-up watch add CODE` | 手动加入观察池 |
+| `stock-up daily` | 执行每日复盘并生成报告；默认使用 StockAPI 扫描龙虎榜并加入观察池 |
+| `stock-up watch add CODE` | 手动加入观察池；不传 `--name` 时会尝试自动获取股票名 |
 | `stock-up watch list` | 查看观察池 |
 | `stock-up watch check` | 检查观察池信号 |
 | `stock-up watch abandoned` | 查看废弃观察池 |
 | `stock-up watch set CODE` | 修正观察股高低点 |
-| `stock-up hold add CODE` | 添加持仓 |
+| `stock-up hold add CODE` | 添加持仓；不传 `--name` 时会尝试自动获取股票名 |
 | `stock-up hold list` | 查看持仓 |
 | `stock-up hold check` | 检查持仓信号 |
 | `stock-up hold set CODE` | 修正持仓参数 |

@@ -70,7 +70,7 @@ stock-up tick
 stock-up daily
 ```
 
-收盘后执行一次，生成 Markdown 日报：
+收盘后执行一次。默认使用 StockAPI，并自动扫描龙虎榜加入观察池，生成 Markdown 日报：
 
 ```text
 ~/.stock-up/reports/YYYY-MM-DD.md

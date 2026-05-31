@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
 
 from stock_up.cli import app
+from stock_up.repositories import HoldingRepository, WatchRepository
 
 
 runner = CliRunner()
@@ -39,3 +40,25 @@ def test_hold_add_buy_close(tmp_path):
     result = runner.invoke(app, ["hold", "close", "300308", "--home", str(home), "--price", "130", "--reason", "止盈"])
     assert result.exit_code == 0
     assert "4000" in result.stdout
+
+
+def test_watch_add_fetches_name_when_name_missing(tmp_path):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    result = runner.invoke(app, ["watch", "add", "300308", "--home", str(home), "--high", "130", "--low", "110"])
+    assert result.exit_code == 0
+    item = WatchRepository(home / "data.db").get("sz300308")
+    assert item is not None
+    assert item.name
+    assert item.name != "sz300308"
+
+
+def test_hold_add_fetches_name_when_name_missing(tmp_path):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    result = runner.invoke(app, ["hold", "add", "300308", "--home", str(home), "--cost", "100", "--qty", "100"])
+    assert result.exit_code == 0
+    item = HoldingRepository(home / "data.db").get("sz300308")
+    assert item is not None
+    assert item.name
+    assert item.name != "sz300308"

@@ -56,6 +56,19 @@ def _make_provider(provider: str, purpose: str = "realtime"):
     return make_provider(provider, purpose=purpose)
 
 
+def _resolve_stock_name(code: str, provided_name: str, provider: str = "qq") -> str:
+    if provided_name:
+        return provided_name
+    full_code = format_code(code) or code
+    try:
+        quotes = _make_provider(provider, purpose="realtime").get_realtime_quotes([full_code])
+    except Exception:
+        return full_code
+    if quotes and quotes[0].name:
+        return quotes[0].name
+    return full_code
+
+
 @app.command()
 def quote(
     code: str,
@@ -94,7 +107,7 @@ def tick(
 @app.command()
 def daily(
     home: Path = typer.Option(default_home(), "--home"),
-    provider: str = typer.Option("akshare", "--provider", help="akshare / mock"),
+    provider: str = typer.Option("auto", "--provider", help="auto / stockapi / mock"),
     trade_date: str = typer.Option("", "--date"),
 ):
     """执行每日扫描、检查并生成报告。"""
@@ -149,9 +162,10 @@ def watch_add(
     now: float = typer.Option(0.0, "--now"),
 ):
     full_code = format_code(code) or code
+    resolved_name = _resolve_stock_name(full_code, name)
     repo = WatchRepository(db_path(home))
-    repo.upsert(WatchItem(code=full_code, name=name or full_code, reason=reason, high=high, low=low, now=now))
-    console.print(f"已加入观察池: {full_code} {name or full_code}")
+    repo.upsert(WatchItem(code=full_code, name=resolved_name, reason=reason, high=high, low=low, now=now))
+    console.print(f"已加入观察池: {full_code} {resolved_name}")
 
 
 @watch_app.command("list")
@@ -234,10 +248,11 @@ def hold_add(
         low = low or watch_item.low
         name = name or watch_item.name
         watch_repo.delete(full_code)
+    resolved_name = _resolve_stock_name(full_code, name)
 
     h = Holding(
         code=full_code,
-        name=name or code,
+        name=resolved_name,
         cost=cost,
         quantity=qty,
         buy_date=buy_date or date.today().isoformat(),
@@ -250,8 +265,8 @@ def hold_add(
         rule_type=rule,  # type: ignore[arg-type]
     )
     holding_repo.upsert(h)
-    trade_repo.record(full_code, name or full_code, "buy", cost, qty, h.buy_date)
-    console.print(f"已加入持仓: {full_code} {name or full_code}")
+    trade_repo.record(full_code, resolved_name, "buy", cost, qty, h.buy_date)
+    console.print(f"已加入持仓: {full_code} {resolved_name}")
 
 
 @hold_app.command("list")
