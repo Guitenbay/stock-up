@@ -20,6 +20,6 @@ def test_limit_up_scan_adds_filtered_watch_items(tmp_path):
     assert summary.added_count == 1
     items = WatchRepository(db_path).list_active()
     assert len(items) == 1
-    assert items[0].code == "300308"
+    assert items[0].code == "sz300308"
     assert items[0].high == 120
     assert items[0].low == 110

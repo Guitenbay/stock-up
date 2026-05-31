@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from stock_up.codes import format_code
 from stock_up.config import write_default_config
 from stock_up.db import init_db
 from stock_up.market.akshare_provider import AkShareProvider
@@ -106,9 +107,10 @@ def watch_add(
     low: float = typer.Option(0.0, "--low"),
     now: float = typer.Option(0.0, "--now"),
 ):
+    full_code = format_code(code) or code
     repo = WatchRepository(db_path(home))
-    repo.upsert(WatchItem(code=code, name=name or code, reason=reason, high=high, low=low, now=now))
-    console.print(f"已加入观察池: {code} {name or code}")
+    repo.upsert(WatchItem(code=full_code, name=name or full_code, reason=reason, high=high, low=low, now=now))
+    console.print(f"已加入观察池: {full_code} {name or full_code}")
 
 
 @watch_app.command("list")
@@ -184,15 +186,16 @@ def hold_add(
     holding_repo = HoldingRepository(db_path(home))
     trade_repo = TradeRepository(db_path(home))
 
-    watch_item = watch_repo.get(code)
+    full_code = format_code(code) or code
+    watch_item = watch_repo.get(full_code)
     if watch_item:
         high = high or watch_item.high
         low = low or watch_item.low
         name = name or watch_item.name
-        watch_repo.delete(code)
+        watch_repo.delete(full_code)
 
     h = Holding(
-        code=code,
+        code=full_code,
         name=name or code,
         cost=cost,
         quantity=qty,
@@ -206,8 +209,8 @@ def hold_add(
         rule_type=rule,  # type: ignore[arg-type]
     )
     holding_repo.upsert(h)
-    trade_repo.record(code, name or code, "buy", cost, qty, h.buy_date)
-    console.print(f"已加入持仓: {code} {name or code}")
+    trade_repo.record(full_code, name or full_code, "buy", cost, qty, h.buy_date)
+    console.print(f"已加入持仓: {full_code} {name or full_code}")
 
 
 @hold_app.command("list")
@@ -227,11 +230,12 @@ def hold_add_buy(
     qty: int = typer.Option(..., "--qty"),
     trade_date: str = typer.Option("", "--date"),
 ):
+    full_code = format_code(code) or code
     repo = HoldingRepository(db_path(home))
     trades = TradeRepository(db_path(home))
-    h = repo.add_buy(code, price, qty)
-    trades.record(code, h.name, "add_buy", price, qty, trade_date or date.today().isoformat())
-    console.print(f"已加仓: {code} 新成本 {h.cost:g} 数量 {h.quantity}")
+    h = repo.add_buy(full_code, price, qty)
+    trades.record(full_code, h.name, "add_buy", price, qty, trade_date or date.today().isoformat())
+    console.print(f"已加仓: {full_code} 新成本 {h.cost:g} 数量 {h.quantity}")
 
 
 @hold_app.command("close")
@@ -243,17 +247,18 @@ def hold_close(
     trade_date: str = typer.Option("", "--date"),
     watch: bool = typer.Option(False, "--watch"),
 ):
+    full_code = format_code(code) or code
     holdings = HoldingRepository(db_path(home))
     trades = TradeRepository(db_path(home))
-    h = holdings.get(code)
+    h = holdings.get(full_code)
     if not h:
-        raise typer.BadParameter(f"持仓不存在: {code}")
+        raise typer.BadParameter(f"持仓不存在: {full_code}")
     close_date = trade_date or date.today().isoformat()
-    closed = holdings.close(code, price, close_date, reason)
-    trades.record(code, h.name, "close", price, h.quantity, close_date, reason, closed.realized_pnl)
+    closed = holdings.close(full_code, price, close_date, reason)
+    trades.record(full_code, h.name, "close", price, h.quantity, close_date, reason, closed.realized_pnl)
     if watch:
-        WatchRepository(db_path(home)).upsert(WatchItem(code=code, name=h.name, reason=f"卖出后重新观察: {reason}", high=h.high, low=h.low, now=price))
-    console.print(f"已关闭持仓: {code} 已实现盈亏 {closed.realized_pnl:g}")
+        WatchRepository(db_path(home)).upsert(WatchItem(code=full_code, name=h.name, reason=f"卖出后重新观察: {reason}", high=h.high, low=h.low, now=price))
+    console.print(f"已关闭持仓: {full_code} 已实现盈亏 {closed.realized_pnl:g}")
 
 
 @hold_app.command("check")
@@ -284,10 +289,11 @@ def hold_set(
     ref_high: Optional[float] = typer.Option(None, "--ref-high"),
     rule: Optional[str] = typer.Option(None, "--rule"),
 ):
+    full_code = format_code(code) or code
     repo = HoldingRepository(db_path(home))
-    h = repo.get(code)
+    h = repo.get(full_code)
     if not h:
-        raise typer.BadParameter(f"持仓不存在: {code}")
+        raise typer.BadParameter(f"持仓不存在: {full_code}")
     if highest is not None:
         h.highest = highest
     if swing_low is not None:
@@ -297,4 +303,4 @@ def hold_set(
     if rule is not None:
         h.rule_type = rule  # type: ignore[assignment]
     repo.upsert(h)
-    console.print(f"已更新持仓: {code}")
+    console.print(f"已更新持仓: {full_code}")

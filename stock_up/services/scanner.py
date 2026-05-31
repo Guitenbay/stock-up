@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from stock_up.codes import format_code
 from stock_up.market.base import MarketDataProvider
 from stock_up.models import LimitUpStock, WatchItem
 from stock_up.repositories import WatchRepository
@@ -40,9 +41,10 @@ def run_limit_up_scan(
         if not _passes(stock, filters):
             skipped += 1
             continue
-        recent_bars = provider.get_daily_bars(stock.code, 1) if initial_low_mode == "recent_1d" else []
+        full_code = format_code(stock.code) or stock.code
+        recent_bars = provider.get_daily_bars(full_code, 1) if initial_low_mode == "recent_1d" else []
         repo.upsert(WatchItem(
-            code=stock.code,
+            code=full_code,
             name=stock.name,
             reason=stock.reason or "涨停池",
             high=stock.high,
