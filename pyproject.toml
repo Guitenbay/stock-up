@@ -1,0 +1,26 @@
+[project]
+name = "stock-up"
+version = "0.1.0"
+description = "CLI stock strategy assistant"
+requires-python = ">=3.10"
+dependencies = [
+  "typer>=0.12",
+  "rich>=13",
+  "pydantic>=2",
+  "pyyaml>=6",
+  "requests>=2",
+]
+
+[project.optional-dependencies]
+akshare = ["akshare"]
+dev = ["pytest>=8", "pytest-cov>=5"]
+
+[project.scripts]
+stock-up = "stock_up.cli:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
