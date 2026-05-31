@@ -14,6 +14,7 @@ from stock_up.market.akshare_provider import AkShareProvider
 from stock_up.market.mock import MockProvider
 from stock_up.market.qq import TencentProvider
 from stock_up.models import Holding, WatchItem
+from stock_up.services.daily import run_daily
 from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
 from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
@@ -50,15 +51,35 @@ def init(home: Path = typer.Option(default_home(), "--home", help="stock-up home
     console.print(f"初始化完成: {home}")
 
 
+def _make_provider(provider: str):
+    if provider == "mock":
+        return MockProvider()
+    if provider == "qq":
+        return TencentProvider()
+    return AkShareProvider()
+
+
 @app.command()
 def tick(
     home: Path = typer.Option(default_home(), "--home"),
     provider: str = typer.Option("qq", "--provider", help="qq / mock"),
 ):
     """执行一次盘中检查，由外部定时任务调用。"""
-    market_provider = MockProvider() if provider == "mock" else TencentProvider()
-    summary = run_tick(db_path(home), market_provider)
+    summary = run_tick(db_path(home), _make_provider(provider))
     console.print(f"tick完成: 观察 {summary.updated_watch_count}，持仓 {summary.updated_holding_count}")
+
+
+@app.command()
+def daily(
+    home: Path = typer.Option(default_home(), "--home"),
+    provider: str = typer.Option("akshare", "--provider", help="akshare / mock"),
+    trade_date: str = typer.Option("", "--date"),
+):
+    """执行每日扫描、检查并生成报告。"""
+    date_text = trade_date or date.today().isoformat()
+    summary = run_daily(db_path(home), _make_provider(provider), date_text, home / "reports")
+    console.print(f"daily完成: 新增观察 {summary.new_watch_count}，观察动作 {summary.watch_action_count}，持仓动作 {summary.holding_action_count}")
+    console.print(f"日报: {summary.report_path}")
 
 
 @scan_app.command("limit-up")
@@ -69,11 +90,7 @@ def scan_limit_up(
 ):
     """扫描涨停池并加入观察池。"""
     date_text = trade_date or date.today().isoformat()
-    if provider == "mock":
-        market_provider = MockProvider(limit_up_pool=[])
-    else:
-        market_provider = AkShareProvider()
-    summary = run_limit_up_scan(db_path(home), market_provider, date_text)
+    summary = run_limit_up_scan(db_path(home), _make_provider(provider), date_text)
     console.print(f"涨停扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}，跳过 {summary.skipped_count}")
 
 
