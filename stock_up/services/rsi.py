@@ -7,6 +7,19 @@ from stock_up.market.base import MarketDataProvider
 from stock_up.strategy.rsi import calculate_rsi_series
 
 
+def has_rsi_cache_for_date(db_path: Path, code: str, trade_date: str) -> bool:
+    with connect(db_path) as conn:
+        row = conn.execute(
+            """
+            SELECT 1 FROM quotes_daily
+            WHERE code=? AND trade_date=? AND rsi_short IS NOT NULL AND rsi_long IS NOT NULL
+            LIMIT 1
+            """,
+            (code, trade_date),
+        ).fetchone()
+    return row is not None
+
+
 def update_rsi_for_code(
     db_path: Path,
     provider: MarketDataProvider,
@@ -14,7 +27,11 @@ def update_rsi_for_code(
     days: int = 30,
     short_period: int = 6,
     long_period: int = 12,
-) -> None:
+    cache_date: str | None = None,
+) -> bool:
+    if cache_date and has_rsi_cache_for_date(db_path, code, cache_date):
+        return False
+
     bars = provider.get_daily_bars(code, days)
     closes = [bar.close for bar in bars]
     rsi_short = calculate_rsi_series(closes, short_period)
@@ -57,6 +74,7 @@ def update_rsi_for_code(
                 ),
             )
         conn.commit()
+    return bool(bars)
 
 
 def latest_two_rsi(db_path: Path, code: str) -> tuple[tuple[float | None, float | None], tuple[float | None, float | None]] | None:

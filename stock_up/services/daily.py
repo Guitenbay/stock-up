@@ -47,7 +47,7 @@ def run_daily(
         max_updates=rsi_max_updates,
     )
     for code in rsi_codes:
-        update_rsi_for_code(db_path, provider, code)
+        update_rsi_for_code(db_path, provider, code, cache_date=trade_date)
 
     for item in watch_items:
         result = evaluate_watch(item)
