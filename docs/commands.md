@@ -150,7 +150,7 @@ report:
 |---|---|---|
 | `stock-up init` | 初始化配置、数据库和报告目录 | `stock-up init` |
 | `stock-up tick` | 执行一次盘中检查，由定时任务调用 | `stock-up tick` |
-| `stock-up daily` | 收盘后生成每日复盘报告；会按配置尝试自动加入观察池 | `stock-up daily` |
+| `stock-up daily` | 收盘后生成每日复盘报告；当前默认不会自动新增观察股 | `stock-up daily` |
 | `stock-up quote CODE` | 查看单只股票行情 | `stock-up quote 300308` |
 | `stock-up watch list` | 查看观察池 | `stock-up watch list` |
 | `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
@@ -256,15 +256,25 @@ stock-up tick --provider mock
 
 ## 自动加入观察池
 
+当前默认不会自动新增任何股票到观察池。
+
 以下命令会把股票加入观察池：
 
 | 命令 | 触发方式 | 说明 |
 |---|---|---|
 | `stock-up watch add CODE` | 手动 | 手动指定股票加入观察池 |
-| `stock-up daily` | 自动，按配置 | 每日复盘时会按配置尝试扫描并加入观察池；热点板块龙头策略暂不能使用，因为缺少 StockAPI token 配置 |
+| `stock-up daily` | 自动入口 | 当前默认不新增观察股；热点板块龙头策略暂不能使用，因为缺少 StockAPI token 配置 |
 | `stock-up scan dragon-tiger` | 手动扫描 | 扫描龙虎榜并加入观察池 |
 | `stock-up scan limit-up` | 手动扫描 | 扫描涨停池并加入观察池 |
 | `stock-up hold close CODE --watch` | 手动 | 关闭持仓后重新加入观察池 |
+
+自动加入观察池的策略状态：
+
+| 策略 | 是否默认启用 | 当前状态 |
+|---|---|---|
+| 热点板块龙头 | 否 | 暂不能使用；StockAPI 接口需要 token，目前项目没有配置 token 的能力 |
+| 龙虎榜 | 否 | 可用，但需要手动运行 `stock-up scan dragon-tiger` |
+| 涨停池 | 否 | 可用，但需要手动运行 `stock-up scan limit-up` |
 
 `daily` 的自动观察逻辑由配置控制：
 
