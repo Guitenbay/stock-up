@@ -1,14 +1,41 @@
 # stock-up
 
+[![CI](https://github.com/Guitenbay/stock-up/actions/workflows/ci.yml/badge.svg)](https://github.com/Guitenbay/stock-up/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/stock-up.svg)](https://pypi.org/project/stock-up/)
+[![Python versions](https://img.shields.io/pypi/pyversions/stock-up.svg)](https://pypi.org/project/stock-up/)
+
 命令行版个人股票策略执行助手。
 
-## 安装开发环境
+## 安装
+
+从 PyPI 安装：
 
 ```bash
-python3 -m pip install -e '.[dev]'
+python3 -m pip install stock-up
 ```
 
-如果要使用 AkShare 数据源：
+如果要使用 AkShare 备用数据源：
+
+```bash
+python3 -m pip install 'stock-up[akshare]'
+```
+
+验证安装：
+
+```bash
+stock-up --help
+```
+
+## 开发环境
+
+```bash
+git clone https://github.com/Guitenbay/stock-up.git
+cd stock-up
+python3 -m pip install -e '.[dev]'
+pytest -q
+```
+
+如果开发时要使用 AkShare：
 
 ```bash
 python3 -m pip install -e '.[dev,akshare]'

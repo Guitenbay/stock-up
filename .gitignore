@@ -9,3 +9,5 @@ htmlcov/
 *.db
 reports/
 .stock-up/
+dist/
+build/
