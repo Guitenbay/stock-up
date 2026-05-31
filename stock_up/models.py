@@ -56,6 +56,29 @@ class LimitUpStock:
     board_count: int = 1
 
 
+@dataclass(frozen=True)
+class HotBoard:
+    bk_code: str
+    bk_name: str
+    trade_date: str
+    plate_id: str = ""
+    qjzf: float = 0.0
+    qjje: float = 0.0
+    jlrts: int = 0
+    qiangdu: float = 0.0
+
+
+@dataclass(frozen=True)
+class HotLeader:
+    code: str
+    name: str
+    bk_code: str
+    board_name: str
+    trade_date: str
+    qjzf: float = 0.0
+    jlrts: int = 0
+
+
 @dataclass
 class WatchItem:
     code: str

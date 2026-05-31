@@ -163,7 +163,72 @@ rsi2 -> rsi_long，默认 RSI12
 
 ---
 
-## 4. 数据源优先级建议
+## 4. 热点板块接口
+
+`stock-up daily` 的观察池自动加入策略使用热点板块龙头，而不是涨停池。
+
+接口：
+
+```text
+GET https://www.stockapi.com.cn/v1/hotBkJlrDr
+```
+
+请求参数：
+
+| 参数 | 必填 | 说明 | 示例 |
+|---|---|---|---|
+| date | 是 | 日期 | 2025-11-14 |
+
+响应字段：
+
+| 字段 | 含义 |
+|---|---|
+| bkCode | 板块代码 |
+| bkName | 板块名称 |
+| qjzf | 涨幅 |
+| qjje | 净额 |
+| jlrts | 资金净流入天数 |
+| qiangdu | 板块强度 |
+| time | 时间 |
+
+---
+
+## 5. 热点板块龙头股接口
+
+接口：
+
+```text
+GET https://www.stockapi.com.cn/v1/hotBkJlrLongTou
+```
+
+请求参数：
+
+| 参数 | 必填 | 说明 | 示例 |
+|---|---|---|---|
+| date | 是 | 日期 | 2025-11-14 |
+| plateId | 是 | 板块 id / 板块代码 | 801004 |
+
+响应字段：
+
+| 字段 | 含义 |
+|---|---|
+| code | 股票代码 |
+| name | 股票名称 |
+| bkCode | 板块代码 |
+| bk | 所属板块 |
+| qjzf | 5 日区间涨幅 |
+| jlrts | 资金净流入天数 |
+| time | 时间 |
+
+`stock-up` 会将龙头股加入观察池，原因格式：
+
+```text
+热点板块龙头: <板块名> / <股票所属板块>
+```
+
+---
+
+## 6. 数据源优先级建议
 
 ```yaml
 market:
@@ -177,4 +242,10 @@ RSI 优先级：
 
 ```text
 StockAPI RSI 专用接口 -> 本地日 K 计算 fallback
+```
+
+观察池自动加入：
+
+```text
+StockAPI 热点板块 -> StockAPI 热点板块龙头股
 ```

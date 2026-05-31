@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from stock_up.models import DailyBar, LimitUpStock, Quote
+from stock_up.models import DailyBar, HotBoard, HotLeader, LimitUpStock, Quote
 
 
 class MarketDataProvider(Protocol):
@@ -16,4 +16,10 @@ class MarketDataProvider(Protocol):
         ...
 
     def get_trade_calendar(self) -> list[str]:
+        ...
+
+    def get_hot_boards(self, trade_date: str) -> list[HotBoard]:
+        ...
+
+    def get_hot_leaders(self, trade_date: str, plate_id: str) -> list[HotLeader]:
         ...

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from stock_up.market.base import MarketDataProvider
 from stock_up.repositories import HoldingRepository, TradeRepository, WatchRepository
+from stock_up.services.hot_leader_scanner import run_hot_leader_scan
 from stock_up.services.reporter import DailyReport, write_daily_report
 from stock_up.services.rsi import latest_two_rsi, update_rsi_for_code
 from stock_up.services.rsi_budget import plan_rsi_updates
@@ -31,7 +32,7 @@ def run_daily(
     report_dir: Path,
     rsi_max_updates: int = 50,
 ) -> DailySummary:
-    scan_summary = run_limit_up_scan(db_path, provider, trade_date)
+    scan_summary = run_hot_leader_scan(db_path, provider, trade_date)
     run_tick(db_path, provider)
 
     watch_repo = WatchRepository(db_path)
@@ -75,7 +76,7 @@ def run_daily(
     for row in trade_repo.list_by_date(trade_date):
         trades.append(f"{row['trade_type']} {row['code']} {row['quantity']}股 @{row['price']:g}")
 
-    new_watch = [f"新增 {scan_summary.added_count} 只涨停观察"] if scan_summary.added_count else []
+    new_watch = [f"新增 {scan_summary.added_count} 只热点板块龙头观察"] if scan_summary.added_count else []
     report = DailyReport(
         trade_date=trade_date,
         new_watch=new_watch,
