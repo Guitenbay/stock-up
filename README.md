@@ -128,8 +128,15 @@ stock-up tick --provider mock
 
 ```text
 实时行情：腾讯 qt.gtimg.cn
-涨停池：AkShare 东方财富
+自动加入观察：默认关闭
 日 K / RSI：StockAPI，失败再尝试其他源
+```
+
+热点板块龙头自动加入观察目前默认关闭，因为 StockAPI 龙头接口需要 token：
+
+```yaml
+auto_watch:
+  hot_leader_scan_enabled: false
 ```
 
 StockAPI 无 token 时会按 5 天窗口分段请求，以满足免费接口限制。

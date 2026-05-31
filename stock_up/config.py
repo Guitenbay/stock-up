@@ -27,6 +27,10 @@ class LimitUpConfig(BaseModel):
     include_multi_board: bool = True
 
 
+class AutoWatchConfig(BaseModel):
+    hot_leader_scan_enabled: bool = False
+
+
 class WatchConfig(BaseModel):
     initial_low_mode: Literal["same_day", "recent_1d"] = "same_day"
     buy_382_tolerance: float = 0.03
@@ -89,6 +93,7 @@ class AppConfig(BaseModel):
     market: MarketConfig = Field(default_factory=MarketConfig)
     tick: TickConfig = Field(default_factory=TickConfig)
     limit_up: LimitUpConfig = Field(default_factory=LimitUpConfig)
+    auto_watch: AutoWatchConfig = Field(default_factory=AutoWatchConfig)
     watch: WatchConfig = Field(default_factory=WatchConfig)
     technical: TechnicalConfig = Field(default_factory=TechnicalConfig)
     holding: HoldingConfig = Field(default_factory=HoldingConfig)

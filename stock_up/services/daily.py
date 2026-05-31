@@ -31,8 +31,9 @@ def run_daily(
     trade_date: str,
     report_dir: Path,
     rsi_max_updates: int = 50,
+    enable_hot_leader_scan: bool = False,
 ) -> DailySummary:
-    scan_summary = run_hot_leader_scan(db_path, provider, trade_date)
+    scan_summary = run_hot_leader_scan(db_path, provider, trade_date) if enable_hot_leader_scan else None
     run_tick(db_path, provider)
 
     watch_repo = WatchRepository(db_path)
@@ -76,7 +77,8 @@ def run_daily(
     for row in trade_repo.list_by_date(trade_date):
         trades.append(f"{row['trade_type']} {row['code']} {row['quantity']}股 @{row['price']:g}")
 
-    new_watch = [f"新增 {scan_summary.added_count} 只热点板块龙头观察"] if scan_summary.added_count else []
+    added_count = scan_summary.added_count if scan_summary else 0
+    new_watch = [f"新增 {added_count} 只热点板块龙头观察"] if added_count else []
     report = DailyReport(
         trade_date=trade_date,
         new_watch=new_watch,
@@ -87,7 +89,7 @@ def run_daily(
     report_path = write_daily_report(report, report_dir)
     return DailySummary(
         report_path=report_path,
-        new_watch_count=scan_summary.added_count,
+        new_watch_count=added_count,
         watch_action_count=len(watch_actions),
         holding_action_count=len(holding_actions),
     )

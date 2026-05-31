@@ -165,7 +165,7 @@ rsi2 -> rsi_long，默认 RSI12
 
 ## 4. 热点板块接口
 
-`stock-up daily` 的观察池自动加入策略使用热点板块龙头，而不是涨停池。
+`stock-up daily` 曾计划使用热点板块龙头自动加入观察池，但实测龙头股接口需要 token，因此该策略目前默认关闭。代码保留配置开关，待配置 token 后可启用。
 
 接口：
 
@@ -220,7 +220,23 @@ GET https://www.stockapi.com.cn/v1/hotBkJlrLongTou
 | jlrts | 资金净流入天数 |
 | time | 时间 |
 
-`stock-up` 会将龙头股加入观察池，原因格式：
+实测无 token 调用该接口返回：
+
+```json
+{
+  "code": 60041,
+  "msg": "该接口只对有token用户开放，请获取token，地址:https://www.stockapi.com.cn/"
+}
+```
+
+因此当前默认配置为关闭：
+
+```yaml
+auto_watch:
+  hot_leader_scan_enabled: false
+```
+
+开启后，`stock-up` 会将龙头股加入观察池，原因格式：
 
 ```text
 热点板块龙头: <板块名> / <股票所属板块>
