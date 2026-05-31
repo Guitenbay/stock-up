@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 from stock_up.models import DailyBar, LimitUpStock, Quote
+
+
+def calc_hist_date_range(days: int, today: date | None = None) -> tuple[str, str]:
+    today = today or date.today()
+    # Calendar-day buffer: enough to cover weekends/holidays for RSI windows.
+    start = today - timedelta(days=max(days * 2 + 10, 40))
+    return start.strftime("%Y%m%d"), today.strftime("%Y%m%d")
 
 
 class AkShareProvider:
@@ -23,7 +32,17 @@ class AkShareProvider:
 
     def get_daily_bars(self, code: str, days: int) -> list[DailyBar]:
         symbol = code.replace("sh", "").replace("sz", "").replace("bj", "")
-        df = self.ak.stock_zh_a_hist(symbol=symbol, period="daily", adjust="")
+        start_date, end_date = calc_hist_date_range(days)
+        try:
+            df = self.ak.stock_zh_a_hist(
+                symbol=symbol,
+                period="daily",
+                start_date=start_date,
+                end_date=end_date,
+                adjust="",
+            )
+        except Exception:
+            return []
         rows = []
         for _, row in df.tail(days).iterrows():
             rows.append(DailyBar(
