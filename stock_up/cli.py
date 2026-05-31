@@ -56,6 +56,31 @@ def _make_provider(provider: str, purpose: str = "realtime"):
 
 
 @app.command()
+def quote(
+    code: str,
+    provider: str = typer.Option("qq", "--provider", help="qq / akshare / mock"),
+):
+    """查看单只股票行情，便于对比数据源。"""
+    full_code = format_code(code) or code
+    quotes = _make_provider(provider, purpose="realtime").get_realtime_quotes([full_code])
+    if not quotes:
+        console.print(f"暂无行情: {full_code}")
+        return
+    q = quotes[0]
+    table = Table("字段", "值")
+    table.add_row("代码", q.code)
+    table.add_row("名称", q.name)
+    table.add_row("当前价", f"{q.now:g}")
+    table.add_row("昨收", f"{q.pre_close:g}")
+    table.add_row("日高", f"{q.high:g}")
+    table.add_row("日低", f"{q.low:g}")
+    table.add_row("均价", f"{q.avg:g}")
+    table.add_row("成交额", f"{q.amount:g}")
+    table.add_row("成交量", f"{q.volume:g}")
+    console.print(table)
+
+
+@app.command()
 def tick(
     home: Path = typer.Option(default_home(), "--home"),
     provider: str = typer.Option("qq", "--provider", help="qq / mock"),
