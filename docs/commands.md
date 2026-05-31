@@ -60,6 +60,7 @@ limit_up:
   include_multi_board: true
 
 auto_watch:
+  dragon_tiger_scan_enabled: true
   hot_leader_scan_enabled: false
 
 watch:
@@ -118,6 +119,7 @@ report:
 | `limit_up.min_amount` | `500000000` | 涨停扫描最低成交额 |
 | `limit_up.include_first_board` | `true` | 是否包含首板 |
 | `limit_up.include_multi_board` | `true` | 是否包含连板 |
+| `auto_watch.dragon_tiger_scan_enabled` | `true` | 每日复盘是否自动扫描龙虎榜并加入观察池 |
 | `auto_watch.hot_leader_scan_enabled` | `false` | 每日复盘是否自动扫描热点板块龙头；暂不能使用，因为 StockAPI 接口需要 token，目前项目没有配置 token 的能力 |
 | `watch.initial_low_mode` | `same_day` | 自动加入观察时的初始低点：`same_day` 当日低点，`recent_1d` 最近 1 日低点 |
 | `watch.buy_382_tolerance` | `0.03` | 接近 0.382 回撤位的买点容忍比例 |
@@ -150,7 +152,7 @@ report:
 |---|---|---|
 | `stock-up init` | 初始化配置、数据库和报告目录 | `stock-up init` |
 | `stock-up tick` | 执行一次盘中检查，由定时任务调用 | `stock-up tick` |
-| `stock-up daily` | 收盘后生成每日复盘报告；当前默认不会自动新增观察股 | `stock-up daily` |
+| `stock-up daily` | 收盘后生成每日复盘报告；默认自动扫描龙虎榜并加入观察池 | `stock-up daily` |
 | `stock-up quote CODE` | 查看单只股票行情 | `stock-up quote 300308` |
 | `stock-up watch list` | 查看观察池 | `stock-up watch list` |
 | `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
@@ -256,14 +258,14 @@ stock-up tick --provider mock
 
 ## 自动加入观察池
 
-当前默认不会自动新增任何股票到观察池。
+当前默认会在 `stock-up daily` 后自动扫描龙虎榜，并把龙虎榜股票加入观察池。
 
 以下命令会把股票加入观察池：
 
 | 命令 | 触发方式 | 说明 |
 |---|---|---|
 | `stock-up watch add CODE` | 手动 | 手动指定股票加入观察池 |
-| `stock-up daily` | 自动入口 | 当前默认不新增观察股；热点板块龙头策略暂不能使用，因为缺少 StockAPI token 配置 |
+| `stock-up daily` | 自动入口 | 默认自动扫描龙虎榜并加入观察池；热点板块龙头策略暂不能使用，因为缺少 StockAPI token 配置 |
 | `stock-up scan dragon-tiger` | 手动扫描 | 扫描龙虎榜并加入观察池 |
 | `stock-up scan limit-up` | 手动扫描 | 扫描涨停池并加入观察池 |
 | `stock-up hold close CODE --watch` | 手动 | 关闭持仓后重新加入观察池 |
@@ -273,17 +275,20 @@ stock-up tick --provider mock
 | 策略 | 是否默认启用 | 当前状态 |
 |---|---|---|
 | 热点板块龙头 | 否 | 暂不能使用；StockAPI 接口需要 token，目前项目没有配置 token 的能力 |
-| 龙虎榜 | 否 | 可用，但需要手动运行 `stock-up scan dragon-tiger` |
+| 龙虎榜 | 是 | `stock-up daily` 默认自动扫描；也可手动运行 `stock-up scan dragon-tiger` |
 | 涨停池 | 否 | 可用，但需要手动运行 `stock-up scan limit-up` |
 
 `daily` 的自动观察逻辑由配置控制：
 
 ```yaml
 auto_watch:
+  dragon_tiger_scan_enabled: true
   hot_leader_scan_enabled: false
 ```
 
-默认值是 `false`，所以普通执行 `stock-up daily` 时不会自动扫描热点板块龙头。这个配置目前暂不能使用：StockAPI 热点板块龙头接口需要 token，目前项目没有配置 token 的能力。
+`dragon_tiger_scan_enabled` 默认值是 `true`，所以普通执行 `stock-up daily` 时会自动扫描龙虎榜并加入观察池。
+
+`hot_leader_scan_enabled` 默认值是 `false`。这个配置目前暂不能使用：StockAPI 热点板块龙头接口需要 token，目前项目没有配置 token 的能力。
 
 ## 数据源
 
@@ -291,7 +296,7 @@ auto_watch:
 
 ```text
 实时行情：腾讯 qt.gtimg.cn
-自动加入观察：默认关闭
+自动加入观察：默认开启龙虎榜；热点板块龙头暂不能使用
 日 K / RSI：StockAPI，失败再尝试其他源
 ```
 
@@ -299,6 +304,7 @@ auto_watch:
 
 ```yaml
 auto_watch:
+  dragon_tiger_scan_enabled: true
   hot_leader_scan_enabled: false
 ```
 
