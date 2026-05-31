@@ -327,6 +327,27 @@ auto_watch:
 日 K / RSI：StockAPI，失败再尝试其他源
 ```
 
+数据源对命令的支持情况：
+
+| 数据源 | 支持的命令 / 功能 | 说明 |
+|---|---|---|
+| `qq` | `stock-up quote`、`stock-up tick`、`watch add` / `hold add` 自动获取股票名 | 腾讯实时行情；适合盘中行情和股票名查询 |
+| `stockapi` | `stock-up daily`、`stock-up scan dragon-tiger`、RSI / 日 K | 默认用于每日复盘和龙虎榜；无 token 时日 K 会按 5 天窗口分段请求 |
+| `akshare` | `stock-up scan limit-up`、部分日 K / 交易日历备用 | 默认用于涨停池扫描；不支持当前龙虎榜扫描 |
+| `mock` | 所有主要命令的测试场景 | 只用于测试，不访问外部网络 |
+| `auto` | 按命令场景自动选择 | `quote` / `tick` 走 `qq`，`daily` / RSI 走 `stockapi`，龙虎榜走 `stockapi`，涨停池走 `akshare` |
+
+命令行显式指定 `--provider` 时优先级最高；不指定时默认读取 `config.yaml`。
+
+| 命令 | 默认配置项 | 默认实际数据源 | 可用 provider |
+|---|---|---|---|
+| `stock-up quote CODE` | `market.realtime_provider` | `auto -> qq` | `config` / `auto` / `qq` / `akshare` / `mock` |
+| `stock-up tick` | `market.realtime_provider` | `auto -> qq` | `config` / `auto` / `qq` / `mock` |
+| `stock-up daily` | `market.daily_provider` | `auto -> stockapi` | `config` / `auto` / `stockapi` / `mock` |
+| `stock-up scan dragon-tiger` | `market.dragon_tiger_provider` | `auto -> stockapi` | `config` / `auto` / `stockapi` / `mock` |
+| `stock-up scan limit-up` | `market.limit_up_provider` | `auto -> akshare` | `config` / `auto` / `akshare` / `mock` |
+| `watch add` / `hold add` 自动获取股票名 | `market.realtime_provider` | `auto -> qq` | 当前内部使用实时行情 provider |
+
 热点板块龙头自动加入观察目前默认关闭，且暂不能使用：StockAPI 龙头接口需要 token，目前项目没有配置 token 的能力。
 
 ```yaml

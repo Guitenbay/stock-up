@@ -260,6 +260,18 @@ RSI / 日 K：StockAPI 优先
 龙虎榜：StockAPI
 ```
 
+数据源对命令的支持情况：
+
+| 数据源 | 支持的命令 / 功能 | 说明 |
+|---|---|---|
+| `qq` | `stock-up quote`、`stock-up tick`、`watch add` / `hold add` 自动获取股票名 | 腾讯实时行情；适合盘中行情和股票名查询 |
+| `stockapi` | `stock-up daily`、`stock-up scan dragon-tiger`、RSI / 日 K | 默认用于每日复盘和龙虎榜 |
+| `akshare` | `stock-up scan limit-up`、部分日 K / 交易日历备用 | 默认用于涨停池扫描；不支持当前龙虎榜扫描 |
+| `mock` | 所有主要命令的测试场景 | 只用于测试，不访问外部网络 |
+| `auto` | 按命令场景自动选择 | `quote` / `tick` 走 `qq`，`daily` / RSI 走 `stockapi`，龙虎榜走 `stockapi`，涨停池走 `akshare` |
+
+命令行显式指定 `--provider` 时优先级最高；不指定时默认读取 `config.yaml`。
+
 热点板块龙头自动加入观察默认关闭，且暂不能使用：StockAPI 龙头接口需要 token，目前项目没有配置 token 的能力。
 
 ```yaml
