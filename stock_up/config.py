@@ -28,6 +28,7 @@ class LimitUpConfig(BaseModel):
 
 
 class AutoWatchConfig(BaseModel):
+    dragon_tiger_scan_enabled: bool = True
     hot_leader_scan_enabled: bool = False
 
 

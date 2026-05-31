@@ -5,6 +5,7 @@ from pathlib import Path
 
 from stock_up.market.base import MarketDataProvider
 from stock_up.repositories import HoldingRepository, TradeRepository, WatchRepository
+from stock_up.services.dragon_tiger_scanner import run_dragon_tiger_scan
 from stock_up.services.hot_leader_scanner import run_hot_leader_scan
 from stock_up.services.reporter import DailyReport, write_daily_report
 from stock_up.services.rsi import latest_two_rsi, update_rsi_for_code
@@ -32,8 +33,10 @@ def run_daily(
     report_dir: Path,
     rsi_max_updates: int = 50,
     enable_hot_leader_scan: bool = False,
+    enable_dragon_tiger_scan: bool = True,
 ) -> DailySummary:
-    scan_summary = run_hot_leader_scan(db_path, provider, trade_date) if enable_hot_leader_scan else None
+    hot_summary = run_hot_leader_scan(db_path, provider, trade_date) if enable_hot_leader_scan else None
+    dragon_summary = run_dragon_tiger_scan(db_path, provider, trade_date) if enable_dragon_tiger_scan else None
     run_tick(db_path, provider)
 
     watch_repo = WatchRepository(db_path)
@@ -77,8 +80,14 @@ def run_daily(
     for row in trade_repo.list_by_date(trade_date):
         trades.append(f"{row['trade_type']} {row['code']} {row['quantity']}股 @{row['price']:g}")
 
-    added_count = scan_summary.added_count if scan_summary else 0
-    new_watch = [f"新增 {added_count} 只热点板块龙头观察"] if added_count else []
+    hot_added = hot_summary.added_count if hot_summary else 0
+    dragon_added = dragon_summary.added_count if dragon_summary else 0
+    added_count = hot_added + dragon_added
+    new_watch = []
+    if dragon_added:
+        new_watch.append(f"新增 {dragon_added} 只龙虎榜观察")
+    if hot_added:
+        new_watch.append(f"新增 {hot_added} 只热点板块龙头观察")
     report = DailyReport(
         trade_date=trade_date,
         new_watch=new_watch,

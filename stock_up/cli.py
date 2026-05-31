@@ -107,6 +107,7 @@ def daily(
         home / "reports",
         rsi_max_updates=cfg.technical.rsi.max_updates_per_daily,
         enable_hot_leader_scan=cfg.auto_watch.hot_leader_scan_enabled,
+        enable_dragon_tiger_scan=cfg.auto_watch.dragon_tiger_scan_enabled,
     )
     console.print(f"daily完成: 新增观察 {summary.new_watch_count}，观察动作 {summary.watch_action_count}，持仓动作 {summary.holding_action_count}")
     console.print(f"日报: {summary.report_path}")

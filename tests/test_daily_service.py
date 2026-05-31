@@ -1,7 +1,7 @@
 from stock_up.db import init_db
 from stock_up.market.mock import MockProvider
-from stock_up.models import Holding, LimitUpStock, Quote
-from stock_up.repositories import HoldingRepository
+from stock_up.models import DragonTigerStock, Holding, LimitUpStock, Quote
+from stock_up.repositories import HoldingRepository, WatchRepository
 from stock_up.services.daily import run_daily
 
 
@@ -14,6 +14,22 @@ def test_run_daily_creates_report(tmp_path):
         limit_up_pool=[LimitUpStock(code="300308", name="中际旭创", trade_date="2026-05-31", high=120, low=110, close=120, amount=600_000_000)],
         quotes={"300308": Quote(code="300308", name="中际旭创", now=118, high=120, low=110), "600000": Quote(code="600000", name="浦发银行", now=9, high=9.5, low=8.8)},
     )
-    summary = run_daily(db_path, provider, trade_date="2026-05-31", report_dir=report_dir)
+    summary = run_daily(db_path, provider, trade_date="2026-05-31", report_dir=report_dir, enable_dragon_tiger_scan=False)
     assert summary.report_path.exists()
     assert "stock-up 每日报告" in summary.report_path.read_text(encoding="utf-8")
+
+
+def test_run_daily_scans_dragon_tiger_by_default(tmp_path):
+    db_path = tmp_path / "data.db"
+    report_dir = tmp_path / "reports"
+    init_db(db_path)
+    provider = MockProvider(
+        dragon_tiger=[DragonTigerStock(code="000858", name="五粮液", trade_date="2026-05-31", reason="机构买入", close=84.89)],
+        quotes={"sz000858": Quote(code="sz000858", name="五粮液", now=84.89, high=85.59, low=80.88, avg=83)},
+    )
+    summary = run_daily(db_path, provider, trade_date="2026-05-31", report_dir=report_dir)
+    assert summary.new_watch_count == 1
+    item = WatchRepository(db_path).get("sz000858")
+    assert item is not None
+    assert "龙虎榜" in item.reason
+    assert "新增 1 只龙虎榜观察" in summary.report_path.read_text(encoding="utf-8")
