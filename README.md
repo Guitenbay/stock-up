@@ -2,4 +2,169 @@
 
 命令行版个人股票策略执行助手。
 
-详见上级目录 `stock-up设计文档.md`。
+## 安装开发环境
+
+```bash
+python3 -m pip install -e '.[dev]'
+```
+
+如果要使用 AkShare 数据源：
+
+```bash
+python3 -m pip install -e '.[dev,akshare]'
+```
+
+## 初始化
+
+```bash
+stock-up init
+```
+
+默认创建：
+
+```text
+~/.stock-up/config.yaml
+~/.stock-up/data.db
+~/.stock-up/reports/
+```
+
+测试时可以指定目录：
+
+```bash
+stock-up init --home /tmp/stock-up-demo
+```
+
+## 观察池
+
+手动加入观察：
+
+```bash
+stock-up watch add 300308 --name 中际旭创 --high 130 --low 110 --now 120
+```
+
+查看观察池：
+
+```bash
+stock-up watch list
+```
+
+检查观察信号：
+
+```bash
+stock-up watch check
+```
+
+查看废弃观察：
+
+```bash
+stock-up watch abandoned
+```
+
+修正高低点：
+
+```bash
+stock-up watch set 300308 --high 135 --low 112
+```
+
+## 持仓
+
+添加持仓：
+
+```bash
+stock-up hold add 300308 --name 中际旭创 --cost 120 --qty 100 --rule wolf_swing
+```
+
+规则支持：
+
+```text
+wolf_swing = 狼大波段规则
+hai_long   = 海指导规则
+both       = 两套规则同时开启
+```
+
+加仓：
+
+```bash
+stock-up hold add-buy 300308 --price 125 --qty 100
+```
+
+检查持仓：
+
+```bash
+stock-up hold check
+```
+
+关闭持仓：
+
+```bash
+stock-up hold close 300308 --price 135 --reason 止盈
+```
+
+关闭后重新加入观察：
+
+```bash
+stock-up hold close 300308 --price 135 --reason 止盈 --watch
+```
+
+## 盘中 tick
+
+`stock-up` 不常驻。盘中由外部定时任务反复调用：
+
+```bash
+stock-up tick
+```
+
+默认使用腾讯实时行情。测试可用：
+
+```bash
+stock-up tick --provider mock
+```
+
+建议外部定时任务每 20 秒调用一次。
+
+## 涨停扫描
+
+```bash
+stock-up scan limit-up
+```
+
+默认使用 AkShare。测试可用：
+
+```bash
+stock-up scan limit-up --provider mock --date 2026-05-31
+```
+
+初始低点模式：
+
+```bash
+stock-up scan limit-up --low-mode same_day
+stock-up scan limit-up --low-mode recent_1d
+```
+
+## 每日报告
+
+```bash
+stock-up daily
+```
+
+测试：
+
+```bash
+stock-up daily --provider mock --date 2026-05-31
+```
+
+报告输出到：
+
+```text
+~/.stock-up/reports/YYYY-MM-DD.md
+```
+
+## 测试
+
+```bash
+pytest -q
+```
+
+## 免责声明
+
+本工具仅用于个人复盘和策略辅助，不构成投资建议。
