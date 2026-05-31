@@ -7,6 +7,22 @@ from stock_up.market.base import MarketDataProvider
 from stock_up.strategy.rsi import calculate_rsi_series
 
 
+def _get_direct_rsi_rows(
+    provider: MarketDataProvider,
+    code: str,
+    days: int,
+    short_period: int,
+    long_period: int,
+) -> list[tuple[str, float, float]]:
+    get_rsi_rows = getattr(provider, "get_rsi_rows", None)
+    if not callable(get_rsi_rows):
+        return []
+    try:
+        return list(get_rsi_rows(code, days, short_period, long_period, 24))
+    except Exception:
+        return []
+
+
 def has_rsi_cache_for_date(db_path: Path, code: str, trade_date: str) -> bool:
     with connect(db_path) as conn:
         row = conn.execute(
@@ -31,6 +47,23 @@ def update_rsi_for_code(
 ) -> bool:
     if cache_date and has_rsi_cache_for_date(db_path, code, cache_date):
         return False
+
+    direct_rows = _get_direct_rsi_rows(provider, code, days, short_period, long_period)
+    if direct_rows:
+        with connect(db_path) as conn:
+            for trade_date, rsi_s, rsi_l in direct_rows:
+                conn.execute(
+                    """
+                    INSERT INTO quotes_daily(code, trade_date, rsi_short, rsi_long)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(code, trade_date) DO UPDATE SET
+                      rsi_short=excluded.rsi_short,
+                      rsi_long=excluded.rsi_long
+                    """,
+                    (code, trade_date, rsi_s, rsi_l),
+                )
+            conn.commit()
+        return True
 
     bars = provider.get_daily_bars(code, days)
     closes = [bar.close for bar in bars]

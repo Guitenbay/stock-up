@@ -9,6 +9,7 @@ from stock_up.models import DailyBar, LimitUpStock, Quote
 
 
 BASE_URL = "https://www.stockapi.com.cn/v1/base/day"
+RSI_URL = "https://www.stockapi.com.cn/v1/quota/rsi2"
 
 
 def build_date_windows(start: date, end: date, max_days: int = 5) -> list[tuple[str, str]]:
@@ -27,6 +28,42 @@ def strip_market_prefix(code: str) -> str:
         if value.startswith(prefix):
             return value[len(prefix):]
     return value
+
+
+def parse_stockapi_rsi(payload: dict) -> list[tuple[str, float, float]]:
+    if payload.get("code") != 20000:
+        return []
+    data = payload.get("data") or []
+    if isinstance(data, list):
+        return _parse_stockapi_rsi_row_list(data)
+    if isinstance(data, dict):
+        return _parse_stockapi_rsi_array_object(data)
+    return []
+
+
+def _parse_stockapi_rsi_row_list(data: list) -> list[tuple[str, float, float]]:
+    rows: list[tuple[str, float, float]] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        try:
+            rows.append((str(item["date"]), float(item["rsi1"]), float(item["rsi2"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return rows
+
+
+def _parse_stockapi_rsi_array_object(data: dict) -> list[tuple[str, float, float]]:
+    dates = data.get("date") or []
+    rsi1 = data.get("rsi1") or []
+    rsi2 = data.get("rsi2") or []
+    rows: list[tuple[str, float, float]] = []
+    for idx, trade_date in enumerate(dates):
+        try:
+            rows.append((str(trade_date), float(rsi1[idx]), float(rsi2[idx])))
+        except (IndexError, TypeError, ValueError):
+            continue
+    return rows
 
 
 def parse_stockapi_daily(code: str, payload: dict) -> list[DailyBar]:
@@ -118,6 +155,34 @@ class StockApiProvider:
                 continue
             all_rows.extend(parse_stockapi_daily(code, payload))
         unique = {bar.trade_date: bar for bar in all_rows}
+        return [unique[k] for k in sorted(unique)][-days:]
+
+    def get_rsi_rows(self, code: str, days: int, cycle1: int = 6, cycle2: int = 12, cycle3: int = 24) -> list[tuple[str, float, float]]:
+        end = date.today()
+        start = end - timedelta(days=max(days * 2 + 10, 40))
+        all_rows: list[tuple[str, float, float]] = []
+        max_window_days = 30 if self.token else 5
+        for start_date, end_date in build_date_windows(start, end, max_days=max_window_days):
+            params = {
+                "code": strip_market_prefix(code),
+                "cycle1": cycle1,
+                "cycle2": cycle2,
+                "cycle3": cycle3,
+                "startDate": start_date,
+                "endDate": end_date,
+                "calculationCycle": "100",
+            }
+            if self.token:
+                params["token"] = self.token
+            url = RSI_URL + "?" + urlencode(params)
+            try:
+                req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urlopen(req, timeout=10) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+            except Exception:
+                continue
+            all_rows.extend(parse_stockapi_rsi(payload))
+        unique = {trade_date: (trade_date, rsi1, rsi2) for trade_date, rsi1, rsi2 in all_rows}
         return [unique[k] for k in sorted(unique)][-days:]
 
     def get_limit_up_pool(self, trade_date: str) -> list[LimitUpStock]:
