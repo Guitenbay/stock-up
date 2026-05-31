@@ -133,7 +133,7 @@ stock-up daily
 `daily` 是普通用户主要依赖的自动入口。它会在每日复盘时检查配置，并把符合扫描策略的股票加入观察池：
 
 - 当前默认不会自动加入热点板块龙头，因为 `auto_watch.hot_leader_scan_enabled` 默认为 `false`。
-- 如果开启 `auto_watch.hot_leader_scan_enabled: true`，`daily` 会尝试扫描热点板块龙头并加入观察池。
+- `hot_leader_scan_enabled` 暂不能使用：StockAPI 热点板块龙头接口需要 token，目前项目没有配置 token 的能力。
 - 手动扫描命令 `stock-up scan dragon-tiger` 和 `stock-up scan limit-up` 也会把扫描结果加入观察池。
 
 日报输出：
@@ -245,7 +245,7 @@ RSI / 日 K：StockAPI 优先
 龙虎榜：StockAPI
 ```
 
-热点板块龙头自动加入观察默认关闭，因为 StockAPI 龙头接口需要 token：
+热点板块龙头自动加入观察默认关闭，且暂不能使用：StockAPI 龙头接口需要 token，目前项目没有配置 token 的能力。
 
 ```yaml
 auto_watch:

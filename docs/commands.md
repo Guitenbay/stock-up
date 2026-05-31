@@ -118,7 +118,7 @@ report:
 | `limit_up.min_amount` | `500000000` | 涨停扫描最低成交额 |
 | `limit_up.include_first_board` | `true` | 是否包含首板 |
 | `limit_up.include_multi_board` | `true` | 是否包含连板 |
-| `auto_watch.hot_leader_scan_enabled` | `false` | 每日复盘是否自动扫描热点板块龙头；默认关闭，因为接口需要 token |
+| `auto_watch.hot_leader_scan_enabled` | `false` | 每日复盘是否自动扫描热点板块龙头；暂不能使用，因为 StockAPI 接口需要 token，目前项目没有配置 token 的能力 |
 | `watch.initial_low_mode` | `same_day` | 自动加入观察时的初始低点：`same_day` 当日低点，`recent_1d` 最近 1 日低点 |
 | `watch.buy_382_tolerance` | `0.03` | 接近 0.382 回撤位的买点容忍比例 |
 | `watch.buy_618_tolerance` | `0.02` | 接近 0.618 回撤位的买点容忍比例 |
@@ -261,7 +261,7 @@ stock-up tick --provider mock
 | 命令 | 触发方式 | 说明 |
 |---|---|---|
 | `stock-up watch add CODE` | 手动 | 手动指定股票加入观察池 |
-| `stock-up daily` | 自动，按配置 | 每日复盘时会按配置尝试扫描并加入观察池；当前热点板块龙头策略默认关闭 |
+| `stock-up daily` | 自动，按配置 | 每日复盘时会按配置尝试扫描并加入观察池；热点板块龙头策略暂不能使用，因为缺少 StockAPI token 配置 |
 | `stock-up scan dragon-tiger` | 手动扫描 | 扫描龙虎榜并加入观察池 |
 | `stock-up scan limit-up` | 手动扫描 | 扫描涨停池并加入观察池 |
 | `stock-up hold close CODE --watch` | 手动 | 关闭持仓后重新加入观察池 |
@@ -273,7 +273,7 @@ auto_watch:
   hot_leader_scan_enabled: false
 ```
 
-默认值是 `false`，所以普通执行 `stock-up daily` 时不会自动扫描热点板块龙头。改成 `true` 后，`daily` 会尝试扫描热点板块龙头并加入观察池。
+默认值是 `false`，所以普通执行 `stock-up daily` 时不会自动扫描热点板块龙头。这个配置目前暂不能使用：StockAPI 热点板块龙头接口需要 token，目前项目没有配置 token 的能力。
 
 ## 数据源
 
@@ -285,7 +285,7 @@ auto_watch:
 日 K / RSI：StockAPI，失败再尝试其他源
 ```
 
-热点板块龙头自动加入观察目前默认关闭，因为 StockAPI 龙头接口需要 token：
+热点板块龙头自动加入观察目前默认关闭，且暂不能使用：StockAPI 龙头接口需要 token，目前项目没有配置 token 的能力。
 
 ```yaml
 auto_watch:
