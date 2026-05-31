@@ -26,6 +26,86 @@ python3 -m pip install 'stock-up[akshare]'
 stock-up --help
 ```
 
+## 快速开始
+
+普通使用只需要关注这几个命令：
+
+### 1. 初始化
+
+```bash
+stock-up init
+```
+
+初始化本地配置、数据库和报告目录。
+
+### 2. 添加持仓
+
+```bash
+stock-up hold add 300308 --name 中际旭创 --cost 120 --qty 100 --rule both
+```
+
+常用规则：
+
+```text
+wolf_swing = 狼大波段规则，偏趋势持股
+hai_long   = 海指导规则，偏长线仓/时间验证
+both       = 两套规则同时开启
+```
+
+### 3. 盘中检查
+
+```bash
+stock-up tick
+```
+
+更新观察池和持仓池的实时行情，并检查是否有需要动作的信号。
+
+`stock-up` 不常驻，建议用系统定时任务在交易时间内每 20 秒调用一次。
+
+### 4. 每日复盘
+
+```bash
+stock-up daily
+```
+
+收盘后执行一次，生成 Markdown 日报：
+
+```text
+~/.stock-up/reports/YYYY-MM-DD.md
+```
+
+日报会包含：
+
+- 观察动作
+- 持仓动作
+- RSI 特别信号
+- 当天交易记录
+
+### 5. 检查持仓
+
+```bash
+stock-up hold check
+```
+
+手动查看当前持仓是否触发：
+
+- 止损
+- 止盈
+- RSI 死叉
+- 增持观察
+
+### 6. 卖出后关闭持仓
+
+```bash
+stock-up hold close 300308 --price 135 --reason 止盈
+```
+
+如果卖出后还想继续观察：
+
+```bash
+stock-up hold close 300308 --price 135 --reason 止盈 --watch
+```
+
 ## 开发环境
 
 ```bash
