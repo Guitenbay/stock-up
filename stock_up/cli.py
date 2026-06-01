@@ -248,7 +248,7 @@ def watch_add(
 def watch_list(home: Path = typer.Option(default_home(), "--home")):
     repo = WatchRepository(db_path(home))
     rows = repo.list_active()
-    table = Table("代码", "名称", "状态", "现价", "高点", "低点", "0.382", "0.618", "0.786", "位置", "原因")
+    table = Table("代码", "名称", "状态", "现价", "涨跌停", "高点", "低点", "0.382", "0.618", "0.786", "位置", "原因")
     for item in rows:
         has_valid_range = item.high > 0 and item.low > 0 and item.high >= item.low
         levels = calculate_fib_levels(item.high, item.low) if has_valid_range else None
@@ -267,6 +267,7 @@ def watch_list(home: Path = typer.Option(default_home(), "--home")):
             item.name,
             item.status,
             f"{item.now:g}",
+            item.limit_status or "-",
             f"{item.high:g}",
             f"{item.low:g}",
             f"{levels.f382:g}" if levels else "-",
@@ -293,6 +294,9 @@ def watch_refresh_range(home: Path = typer.Option(default_home(), "--home")):
             item.low = quote.low
             item.now = quote.now or item.now
             item.avg = quote.avg or item.avg
+            item.limit_up = quote.limit_up
+            item.limit_down = quote.limit_down
+            item.limit_status = quote.limit_status
             repo.upsert(item)
             updated += 1
         else:
@@ -400,13 +404,14 @@ def hold_add(
 @hold_app.command("list")
 def hold_list(home: Path = typer.Option(default_home(), "--home")):
     repo = HoldingRepository(db_path(home))
-    table = Table("代码", "名称", "现价", "成本", "盈亏%", "数量", "最高", "高点", "低点", "波段低", "参考高", "规则")
+    table = Table("代码", "名称", "现价", "涨跌停", "成本", "盈亏%", "数量", "最高", "高点", "低点", "波段低", "参考高", "规则")
     for h in repo.list_open():
         pnl_pct = ((h.now - h.cost) / h.cost * 100) if h.cost and h.now else 0.0
         table.add_row(
             h.code,
             h.name,
             f"{h.now:g}",
+            h.limit_status or "-",
             f"{h.cost:g}",
             f"{pnl_pct:.2f}%",
             str(h.quantity),
@@ -434,6 +439,9 @@ def hold_refresh_range(home: Path = typer.Option(default_home(), "--home")):
             h.high = quote.high
             h.low = quote.low
             h.now = quote.now or h.now
+            h.limit_up = quote.limit_up
+            h.limit_down = quote.limit_down
+            h.limit_status = quote.limit_status
             h.highest = max(h.highest, quote.high)
             repo.upsert(h)
             updated += 1

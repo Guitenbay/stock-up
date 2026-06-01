@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS watchlist (
   low REAL,
   avg REAL,
   now REAL,
+  limit_up REAL,
+  limit_down REAL,
+  limit_status TEXT,
   f382 REAL,
   f618 REAL,
   f786 REAL,
@@ -34,6 +37,9 @@ CREATE TABLE IF NOT EXISTS holdings (
   highest REAL,
   high REAL,
   low REAL,
+  limit_up REAL,
+  limit_down REAL,
+  limit_status TEXT,
   swing_low REAL,
   ref_high REAL,
   rule_type TEXT,
@@ -110,4 +116,16 @@ def connect(db_path: Path) -> sqlite3.Connection:
 def init_db(db_path: Path) -> None:
     with connect(db_path) as conn:
         conn.executescript(SCHEMA)
+        _ensure_column(conn, "watchlist", "limit_up", "REAL")
+        _ensure_column(conn, "watchlist", "limit_down", "REAL")
+        _ensure_column(conn, "watchlist", "limit_status", "TEXT")
+        _ensure_column(conn, "holdings", "limit_up", "REAL")
+        _ensure_column(conn, "holdings", "limit_down", "REAL")
+        _ensure_column(conn, "holdings", "limit_status", "TEXT")
         conn.commit()
+
+
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, column_type: str) -> None:
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    if column not in {row["name"] for row in rows}:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}")

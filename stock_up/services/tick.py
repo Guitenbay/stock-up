@@ -50,6 +50,9 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
         item.name = quote.name or item.name
         item.now = quote.now
         item.avg = quote.avg or item.avg
+        item.limit_up = quote.limit_up
+        item.limit_down = quote.limit_down
+        item.limit_status = quote.limit_status
         if quote.high > item.high:
             item.high = quote.high
         levels = calculate_fib_levels(item.high, item.low)
@@ -88,6 +91,9 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
             continue
         holding.name = quote.name or holding.name
         holding.now = quote.now
+        holding.limit_up = quote.limit_up
+        holding.limit_down = quote.limit_down
+        holding.limit_status = quote.limit_status
         if quote.high > 0:
             holding.highest = max(holding.highest, quote.high)
             if quote.high > holding.high:

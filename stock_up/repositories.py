@@ -21,8 +21,8 @@ class WatchRepository:
         with connect(self.db_path) as conn:
             conn.execute(
                 """
-                INSERT INTO watchlist(code, name, reason, high, low, avg, now, status, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO watchlist(code, name, reason, high, low, avg, now, limit_up, limit_down, limit_status, status, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(code) DO UPDATE SET
                   name=excluded.name,
                   reason=excluded.reason,
@@ -30,10 +30,13 @@ class WatchRepository:
                   low=excluded.low,
                   avg=excluded.avg,
                   now=excluded.now,
+                  limit_up=excluded.limit_up,
+                  limit_down=excluded.limit_down,
+                  limit_status=excluded.limit_status,
                   status=excluded.status,
                   updated_at=excluded.updated_at
                 """,
-                (item.code, item.name, item.reason, item.high, item.low, item.avg, item.now, item.status, _now()),
+                (item.code, item.name, item.reason, item.high, item.low, item.avg, item.now, item.limit_up, item.limit_down, item.limit_status, item.status, _now()),
             )
             conn.commit()
 
@@ -75,6 +78,9 @@ def _watch_from_row(row: Any) -> WatchItem:
         low=row["low"] or 0.0,
         avg=row["avg"] or 0.0,
         now=row["now"] or 0.0,
+        limit_up=row["limit_up"] or 0.0,
+        limit_down=row["limit_down"] or 0.0,
+        limit_status=row["limit_status"] or "",
         status=row["status"] or "watching",
     )
 
@@ -93,8 +99,8 @@ class HoldingRepository:
         with connect(self.db_path) as conn:
             conn.execute(
                 """
-                INSERT INTO holdings(code, name, cost, quantity, buy_date, now, highest, high, low, swing_low, ref_high, rule_type, status, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO holdings(code, name, cost, quantity, buy_date, now, highest, high, low, limit_up, limit_down, limit_status, swing_low, ref_high, rule_type, status, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(code) DO UPDATE SET
                   name=excluded.name,
                   cost=excluded.cost,
@@ -104,13 +110,16 @@ class HoldingRepository:
                   highest=excluded.highest,
                   high=excluded.high,
                   low=excluded.low,
+                  limit_up=excluded.limit_up,
+                  limit_down=excluded.limit_down,
+                  limit_status=excluded.limit_status,
                   swing_low=excluded.swing_low,
                   ref_high=excluded.ref_high,
                   rule_type=excluded.rule_type,
                   status=excluded.status,
                   updated_at=excluded.updated_at
                 """,
-                (h.code, h.name, h.cost, h.quantity, h.buy_date, h.now, h.highest, h.high, h.low, h.swing_low, h.ref_high, h.rule_type, "open", _now()),
+                (h.code, h.name, h.cost, h.quantity, h.buy_date, h.now, h.highest, h.high, h.low, h.limit_up, h.limit_down, h.limit_status, h.swing_low, h.ref_high, h.rule_type, "open", _now()),
             )
             conn.commit()
 
@@ -165,6 +174,9 @@ def _holding_from_row(row: Any) -> Holding:
         highest=row["highest"] or 0.0,
         high=row["high"] or 0.0,
         low=row["low"] or 0.0,
+        limit_up=row["limit_up"] or 0.0,
+        limit_down=row["limit_down"] or 0.0,
+        limit_status=row["limit_status"] or "",
         swing_low=row["swing_low"] or 0.0,
         ref_high=row["ref_high"] or 0.0,
         rule_type=row["rule_type"] or "wolf_swing",

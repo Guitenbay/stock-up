@@ -105,6 +105,9 @@ class WatchItem:
     low: float = 0.0
     avg: float = 0.0
     now: float = 0.0
+    limit_up: float = 0.0
+    limit_down: float = 0.0
+    limit_status: str = ""
     status: str = "watching"
 
 
@@ -119,6 +122,9 @@ class Holding:
     highest: float = 0.0
     high: float = 0.0
     low: float = 0.0
+    limit_up: float = 0.0
+    limit_down: float = 0.0
+    limit_status: str = ""
     swing_low: float = 0.0
     ref_high: float = 0.0
     rule_type: RuleType = "wolf_swing"
