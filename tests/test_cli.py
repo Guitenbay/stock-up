@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from stock_up.cli import app
-from stock_up.models import Quote, WatchItem
+from stock_up.models import Holding, Quote, WatchItem
 from stock_up.repositories import HoldingRepository, WatchRepository
 
 
@@ -117,3 +117,50 @@ def test_hold_add_uses_qq_range_when_high_low_missing(tmp_path, monkeypatch):
     assert item.name == "中际旭创"
     assert item.high == 126
     assert item.low == 118
+
+
+def test_watch_refresh_range_updates_all_watch_items(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    WatchRepository(home / "data.db").upsert(WatchItem(code="sh600863", name="华能蒙电", high=8.03, low=7.92, now=7.92))
+    monkeypatch.setattr("stock_up.cli._get_realtime_quote", lambda code, provider="qq": Quote(
+        code="sh600863",
+        name="华能蒙电",
+        now=7.92,
+        high=8.03,
+        low=7.0,
+        avg=7.49,
+    ))
+
+    result = runner.invoke(app, ["watch", "refresh-range", "--home", str(home)])
+
+    assert result.exit_code == 0
+    item = WatchRepository(home / "data.db").get("sh600863")
+    assert item is not None
+    assert item.high == 8.03
+    assert item.low == 7.0
+    assert item.now == 7.92
+    assert item.avg == 7.49
+
+
+def test_hold_refresh_range_updates_all_holdings(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    HoldingRepository(home / "data.db").upsert(Holding(code="sh600863", name="华能蒙电", cost=7.5, quantity=100, now=7.92, highest=7.92, high=8.03, low=7.92))
+    monkeypatch.setattr("stock_up.cli._get_realtime_quote", lambda code, provider="qq": Quote(
+        code="sh600863",
+        name="华能蒙电",
+        now=7.92,
+        high=8.03,
+        low=7.0,
+    ))
+
+    result = runner.invoke(app, ["hold", "refresh-range", "--home", str(home)])
+
+    assert result.exit_code == 0
+    item = HoldingRepository(home / "data.db").get("sh600863")
+    assert item is not None
+    assert item.high == 8.03
+    assert item.low == 7.0
+    assert item.now == 7.92
+    assert item.highest == 8.03

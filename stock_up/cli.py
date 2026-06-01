@@ -275,6 +275,28 @@ def watch_list(home: Path = typer.Option(default_home(), "--home")):
     console.print(table)
 
 
+@watch_app.command("refresh-range")
+def watch_refresh_range(home: Path = typer.Option(default_home(), "--home")):
+    """用 QQ 实时行情刷新观察池所有股票的高低点。"""
+    repo = WatchRepository(db_path(home))
+    items = repo.list_active()
+    updated = 0
+    skipped = 0
+    for item in items:
+        quote = _get_realtime_quote(item.code, "qq")
+        if quote and quote.high > 0 and quote.low > 0:
+            item.name = quote.name or item.name
+            item.high = quote.high
+            item.low = quote.low
+            item.now = quote.now or item.now
+            item.avg = quote.avg or item.avg
+            repo.upsert(item)
+            updated += 1
+        else:
+            skipped += 1
+    console.print(f"观察池高低点刷新完成: 更新 {updated}，跳过 {skipped}")
+
+
 @watch_app.command("abandoned")
 def watch_abandoned(home: Path = typer.Option(default_home(), "--home")):
     repo = WatchRepository(db_path(home))
@@ -393,6 +415,28 @@ def hold_list(home: Path = typer.Option(default_home(), "--home")):
             h.rule_type,
         )
     console.print(table)
+
+
+@hold_app.command("refresh-range")
+def hold_refresh_range(home: Path = typer.Option(default_home(), "--home")):
+    """用 QQ 实时行情刷新持仓池所有股票的高低点。"""
+    repo = HoldingRepository(db_path(home))
+    holdings = repo.list_open()
+    updated = 0
+    skipped = 0
+    for h in holdings:
+        quote = _get_realtime_quote(h.code, "qq")
+        if quote and quote.high > 0 and quote.low > 0:
+            h.name = quote.name or h.name
+            h.high = quote.high
+            h.low = quote.low
+            h.now = quote.now or h.now
+            h.highest = max(h.highest, quote.high)
+            repo.upsert(h)
+            updated += 1
+        else:
+            skipped += 1
+    console.print(f"持仓池高低点刷新完成: 更新 {updated}，跳过 {skipped}")
 
 
 @hold_app.command("add-buy")
