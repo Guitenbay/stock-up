@@ -100,3 +100,30 @@ def test_tick_does_not_replace_range_with_current_price_when_quote_range_missing
     assert holding.high == 12
     assert holding.low == 8
     assert holding.highest == 11
+
+
+def test_tick_returns_watch_limit_up_signal_instead_of_buy_signal(tmp_path):
+    db_path = tmp_path / "data.db"
+    init_db(db_path)
+    WatchRepository(db_path).upsert(WatchItem(code="300308", name="中际旭创", high=20, low=10, now=16))
+    provider = MockProvider(quotes={
+        "300308": Quote(code="300308", name="中际旭创", now=15, high=15, low=15, avg=15, limit_up=15, limit_down=12, limit_status="涨停"),
+    })
+
+    summary = run_tick(db_path, provider, trade_date="2026-05-31")
+
+    assert len(summary.watch_signals) == 1
+    assert summary.watch_signals[0].title == "涨停不追"
+
+
+def test_tick_returns_holding_limit_down_risk_signal(tmp_path):
+    db_path = tmp_path / "data.db"
+    init_db(db_path)
+    HoldingRepository(db_path).upsert(Holding(code="600000", name="浦发银行", cost=10, quantity=100, now=10, highest=10, high=11, low=9))
+    provider = MockProvider(quotes={
+        "600000": Quote(code="600000", name="浦发银行", now=9.2, high=9.2, low=9.2, avg=9.2, limit_up=11.0, limit_down=9.2, limit_status="跌停"),
+    })
+
+    summary = run_tick(db_path, provider, trade_date="2026-05-31")
+
+    assert [signal.title for signal in summary.holding_signals] == ["建议止损/退出", "跌停风险"]

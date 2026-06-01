@@ -148,6 +148,9 @@ def quote(
     table.add_row("日高", f"{q.high:g}")
     table.add_row("日低", f"{q.low:g}")
     table.add_row("均价", f"{q.avg:g}")
+    table.add_row("涨停价", f"{q.limit_up:g}")
+    table.add_row("跌停价", f"{q.limit_down:g}")
+    table.add_row("涨跌停", q.limit_status or "-")
     table.add_row("成交额", f"{q.amount:g}")
     table.add_row("成交量", f"{q.volume:g}")
     console.print(table)
@@ -247,7 +250,7 @@ def watch_list(home: Path = typer.Option(default_home(), "--home")):
     rows = repo.list_active()
     table = Table("代码", "名称", "状态", "现价", "高点", "低点", "0.382", "0.618", "0.786", "位置", "原因")
     for item in rows:
-        has_valid_range = item.high > 0 and item.low > 0 and item.high > item.low
+        has_valid_range = item.high > 0 and item.low > 0 and item.high >= item.low
         levels = calculate_fib_levels(item.high, item.low) if has_valid_range else None
         position = "数据不足" if not has_valid_range or item.now <= 0 else "-"
         if levels and item.now:

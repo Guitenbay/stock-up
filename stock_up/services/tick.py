@@ -58,6 +58,13 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
         _update_watch_levels(db_path, item.code, levels.f382, levels.f618, levels.f786)
         updated_watch += 1
 
+        if quote.limit_status == "涨停":
+            _append_watch_limit_signal(watch_signals, alerts, item.code, item.name, "涨停不追", ["当前涨停，暂不按买点处理"], "warning", quote.now, today)
+            continue
+        if quote.limit_status == "跌停":
+            _append_watch_limit_signal(watch_signals, alerts, item.code, item.name, "跌停回避", ["当前跌停，流动性和趋势风险高，暂不观察买点"], "danger", quote.now, today)
+            continue
+
         result = evaluate_watch(item)
         if result.action in ("watch", "abandon") and alerts.should_alert(item.code, result.title, result.price, 0.01):
             message = "; ".join(result.reasons)
@@ -103,6 +110,10 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
                 level=result.level,
                 price=result.price,
             ))
+        if quote.limit_status == "跌停":
+            _append_holding_limit_signal(holding_signals, alerts, holding.code, holding.name, "跌停风险", ["当前跌停，可能无法成交，优先关注止损计划"], "danger", quote.now, today)
+        elif quote.limit_status == "涨停":
+            _append_holding_limit_signal(holding_signals, alerts, holding.code, holding.name, "涨停持有观察", ["当前涨停，趋势较强，暂不主动止盈"], "info", quote.now, today)
 
     return TickSummary(
         updated_watch_count=updated_watch,
@@ -110,6 +121,42 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
         watch_signals=watch_signals,
         holding_signals=holding_signals,
     )
+
+
+def _append_watch_limit_signal(
+    signals: list[TickSignal],
+    alerts: AlertRepository,
+    code: str,
+    name: str,
+    title: str,
+    reasons: list[str],
+    level: str,
+    price: float,
+    today: str,
+) -> None:
+    if not alerts.should_alert(code, title, price, 0.01):
+        return
+    message = "; ".join(reasons)
+    alerts.record(code, name, title, level, price, message, today)
+    signals.append(TickSignal(code=code, name=name, title=title, reasons=reasons, level=level, price=price))
+
+
+def _append_holding_limit_signal(
+    signals: list[TickSignal],
+    alerts: AlertRepository,
+    code: str,
+    name: str,
+    title: str,
+    reasons: list[str],
+    level: str,
+    price: float,
+    today: str,
+) -> None:
+    if not alerts.should_alert(code, title, price, 0.01):
+        return
+    message = "; ".join(reasons)
+    alerts.record(code, name, title, level, price, message, today)
+    signals.append(TickSignal(code=code, name=name, title=title, reasons=reasons, level=level, price=price))
 
 
 def _update_watch_levels(db_path: Path, code: str, f382: float, f618: float, f786: float) -> None:

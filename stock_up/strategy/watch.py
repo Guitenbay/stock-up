@@ -4,7 +4,7 @@ from stock_up.strategy.fib import calculate_fib_levels
 
 def evaluate_watch(item: WatchItem, buy_382_tolerance: float = 0.03, buy_618_tolerance: float = 0.02) -> SignalResult:
     now = item.now
-    if item.high <= 0 or item.low <= 0 or item.high <= item.low or now <= 0:
+    if item.high <= 0 or item.low <= 0 or item.high < item.low or now <= 0:
         return SignalResult(
             action="hold",
             title="数据不足",

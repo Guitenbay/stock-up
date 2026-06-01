@@ -15,6 +15,16 @@ def _to_float(value: str, default: float = 0.0) -> float:
         return default
 
 
+def _limit_status(now: float, limit_up: float, limit_down: float) -> str:
+    if now <= 0:
+        return ""
+    if limit_up > 0 and abs(now - limit_up) < 0.001:
+        return "涨停"
+    if limit_down > 0 and abs(now - limit_down) < 0.001:
+        return "跌停"
+    return ""
+
+
 def parse_qt_line(line: str) -> Quote | None:
     line = line.strip().rstrip(";")
     if not line.startswith("v_") or "=" not in line:
@@ -34,6 +44,8 @@ def parse_qt_line(line: str) -> Quote | None:
     low = _to_float(fields[34])
     volume = _to_float(fields[36])
     amount = _to_float(fields[37])
+    limit_up = _to_float(fields[47]) if len(fields) > 47 else 0.0
+    limit_down = _to_float(fields[48]) if len(fields) > 48 else 0.0
     avg = _calc_avg(code, pre_close, now, volume, amount)
 
     return Quote(
@@ -47,6 +59,9 @@ def parse_qt_line(line: str) -> Quote | None:
         volume=volume,
         amount=amount,
         avg=round(avg, 3),
+        limit_up=round(limit_up, 3),
+        limit_down=round(limit_down, 3),
+        limit_status=_limit_status(now, limit_up, limit_down),
     )
 
 

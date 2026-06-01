@@ -29,6 +29,9 @@ class Quote:
     amount: float = 0.0
     volume: float = 0.0
     avg: float = 0.0
+    limit_up: float = 0.0
+    limit_down: float = 0.0
+    limit_status: str = ""
 
 
 @dataclass

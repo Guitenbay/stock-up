@@ -41,3 +41,9 @@ def test_watch_returns_data_insufficient_when_range_invalid():
     result = evaluate_watch(item)
     assert result.action == "hold"
     assert result.title == "数据不足"
+
+
+def test_watch_all_day_limit_with_equal_high_low_is_valid_range():
+    item = WatchItem(code="x", high=19.06, low=19.06, now=19.06)
+    result = evaluate_watch(item)
+    assert result.title != "数据不足"
