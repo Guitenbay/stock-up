@@ -13,6 +13,15 @@ def evaluate_watch(item: WatchItem, buy_382_tolerance: float = 0.03, buy_618_tol
             price=now,
         )
 
+    if item.high == item.low == now:
+        return SignalResult(
+            action="hold",
+            title="一字板观望",
+            reasons=["高点、低点、现价相同，可能为全程涨停/跌停，暂不按回撤买点判断"],
+            level="info",
+            price=now,
+        )
+
     levels = calculate_fib_levels(item.high, item.low)
 
     if now <= levels.f786 or now < item.low:
