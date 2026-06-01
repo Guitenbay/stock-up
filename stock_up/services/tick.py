@@ -50,8 +50,8 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
         item.name = quote.name or item.name
         item.now = quote.now
         item.avg = quote.avg or item.avg
-        if quote.now > item.high:
-            item.high = quote.now
+        if quote.high > item.high:
+            item.high = quote.high
         levels = calculate_fib_levels(item.high, item.low)
         # persist current levels through raw update fields supported by table
         watch_repo.upsert(item)
@@ -81,9 +81,12 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
             continue
         holding.name = quote.name or holding.name
         holding.now = quote.now
-        holding.highest = max(holding.highest, quote.now, quote.high)
-        if quote.now > holding.high:
-            holding.high = quote.now
+        if quote.high > 0:
+            holding.highest = max(holding.highest, quote.high)
+            if quote.high > holding.high:
+                holding.high = quote.high
+        elif quote.now > 0:
+            holding.highest = max(holding.highest, quote.now)
         holding_repo.upsert(holding)
         updated_holdings += 1
 

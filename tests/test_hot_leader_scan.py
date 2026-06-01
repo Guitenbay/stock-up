@@ -23,3 +23,20 @@ def test_hot_leader_scan_adds_leaders_to_watch(tmp_path):
     item = WatchRepository(db_path).get("sz002083")
     assert item is not None
     assert "热点板块" in item.reason
+
+
+class MissingRangeHotProvider(HotProvider):
+    def get_realtime_quotes(self, codes):
+        return [Quote(code="sz002083", name="孚日股份", now=10, high=0, low=0, avg=10)]
+
+
+def test_hot_leader_scan_does_not_use_current_price_as_range_when_quote_range_missing(tmp_path):
+    db_path = tmp_path / "data.db"
+    init_db(db_path)
+    run_hot_leader_scan(db_path, MissingRangeHotProvider(), trade_date="2025-11-14")
+
+    item = WatchRepository(db_path).get("sz002083")
+    assert item is not None
+    assert item.now == 10
+    assert item.high == 0
+    assert item.low == 0

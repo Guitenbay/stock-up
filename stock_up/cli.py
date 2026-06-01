@@ -76,16 +76,22 @@ def _resolve_provider(home: Path, provider: str, purpose: str) -> str:
     return _provider_from_config(home, purpose)
 
 
-def _resolve_stock_name(code: str, provided_name: str, provider: str = "qq") -> str:
-    if provided_name:
-        return provided_name
+def _get_realtime_quote(code: str, provider: str = "qq"):
     full_code = format_code(code) or code
     try:
         quotes = _make_provider(provider, purpose="realtime").get_realtime_quotes([full_code])
     except Exception:
-        return full_code
-    if quotes and quotes[0].name:
-        return quotes[0].name
+        return None
+    return quotes[0] if quotes else None
+
+
+def _resolve_stock_name(code: str, provided_name: str, provider: str = "qq") -> str:
+    if provided_name:
+        return provided_name
+    full_code = format_code(code) or code
+    quote = _get_realtime_quote(full_code, provider)
+    if quote and quote.name:
+        return quote.name
     return full_code
 
 
@@ -221,7 +227,15 @@ def watch_add(
     now: float = typer.Option(0.0, "--now"),
 ):
     full_code = format_code(code) or code
-    resolved_name = _resolve_stock_name(full_code, name)
+    quote = _get_realtime_quote(full_code, "qq")
+    resolved_name = name or (quote.name if quote and quote.name else full_code)
+    if high <= 0 and low <= 0:
+        if quote and quote.high > 0:
+            high = quote.high
+        if quote and quote.low > 0:
+            low = quote.low
+    if now <= 0 and quote and quote.now > 0:
+        now = quote.now
     repo = WatchRepository(db_path(home))
     repo.upsert(WatchItem(code=full_code, name=resolved_name, reason=reason, high=high, low=low, now=now))
     console.print(f"已加入观察池: {full_code} {resolved_name}")
@@ -330,7 +344,13 @@ def hold_add(
         low = low or watch_item.low
         name = name or watch_item.name
         watch_repo.delete(full_code)
-    resolved_name = _resolve_stock_name(full_code, name)
+    quote = _get_realtime_quote(full_code, "qq")
+    resolved_name = name or (quote.name if quote and quote.name else full_code)
+    if high <= 0 and low <= 0:
+        if quote and quote.high > 0:
+            high = quote.high
+        if quote and quote.low > 0:
+            low = quote.low
 
     h = Holding(
         code=full_code,

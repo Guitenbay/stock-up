@@ -38,12 +38,13 @@ def run_dragon_tiger_scan(db_path: Path, provider: MarketDataProvider, trade_dat
         close = data["close"]
         reason = "；".join(data["reasons"])
         quote = quote_map.get(full_code)
+        high, low = _quote_range_or_close(quote, close)
         repo.upsert(WatchItem(
             code=full_code,
             name=row.name,
             reason=f"龙虎榜: {reason}",
-            high=quote.high if quote else close,
-            low=quote.low if quote else close,
+            high=high,
+            low=low,
             avg=quote.avg if quote else 0.0,
             now=quote.now if quote else close,
             status="watching",
@@ -51,3 +52,9 @@ def run_dragon_tiger_scan(db_path: Path, provider: MarketDataProvider, trade_dat
         added += 1
 
     return DragonTigerScanSummary(total_count=len(rows), added_count=added)
+
+
+def _quote_range_or_close(quote, close: float) -> tuple[float, float]:
+    if quote and quote.high > 0 and quote.low > 0:
+        return quote.high, quote.low
+    return close, close

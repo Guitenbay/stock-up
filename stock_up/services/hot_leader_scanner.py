@@ -34,12 +34,13 @@ def run_hot_leader_scan(
         quote_map = {q.code: q for q in provider.get_realtime_quotes(codes)}
         for leader, full_code in zip(leaders, codes):
             quote = quote_map.get(full_code)
+            high, low = _valid_quote_range(quote)
             repo.upsert(WatchItem(
                 code=full_code,
                 name=leader.name,
                 reason=f"热点板块龙头: {board.bk_name} / {leader.board_name}",
-                high=quote.high if quote else 0.0,
-                low=quote.low if quote else 0.0,
+                high=high,
+                low=low,
                 avg=quote.avg if quote else 0.0,
                 now=quote.now if quote else 0.0,
                 status="watching",
@@ -47,3 +48,9 @@ def run_hot_leader_scan(
             added += 1
 
     return HotLeaderScanSummary(board_count=len(boards), leader_count=leader_count, added_count=added)
+
+
+def _valid_quote_range(quote) -> tuple[float, float]:
+    if quote and quote.high > 0 and quote.low > 0:
+        return quote.high, quote.low
+    return 0.0, 0.0

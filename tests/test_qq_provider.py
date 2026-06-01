@@ -16,3 +16,12 @@ def test_parse_qt_line_a_share():
 
 def test_parse_qt_line_ignores_bad_line():
     assert parse_qt_line("bad") is None
+
+
+def test_parse_qt_line_does_not_fallback_range_to_current_price():
+    line = 'v_sz300308="51~中际旭创~300308~120.5~118.0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~0~2.12~~~~100000~1200000000";'
+    q = parse_qt_line(line)
+    assert q is not None
+    assert q.now == 120.5
+    assert q.high == 0
+    assert q.low == 0

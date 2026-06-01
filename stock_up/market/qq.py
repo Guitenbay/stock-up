@@ -30,8 +30,8 @@ def parse_qt_line(line: str) -> Quote | None:
     name = fields[1]
     now = _to_float(fields[3])
     pre_close = _to_float(fields[4])
-    high = _to_float(fields[33], now)
-    low = _to_float(fields[34], now)
+    high = _to_float(fields[33])
+    low = _to_float(fields[34])
     volume = _to_float(fields[36])
     amount = _to_float(fields[37])
     avg = _calc_avg(code, pre_close, now, volume, amount)

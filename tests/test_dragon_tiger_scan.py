@@ -45,3 +45,23 @@ def test_dragon_tiger_scan_deduplicates_same_stock(tmp_path):
     assert rows[0].code == "sz000858"
     assert "机构买入" in rows[0].reason
     assert "深股通买入" in rows[0].reason
+
+
+class MissingRangeDragonProvider:
+    def get_dragon_tiger(self, trade_date):
+        return [DragonTigerStock(code="000858", name="五粮液", trade_date=trade_date, reason="龙虎榜", close=84.89)]
+
+    def get_realtime_quotes(self, codes):
+        return [Quote(code="sz000858", name="五粮液", now=83.0, high=0, low=0, avg=83)]
+
+
+def test_dragon_tiger_scan_does_not_use_current_price_as_range_when_quote_range_missing(tmp_path):
+    db_path = tmp_path / "data.db"
+    init_db(db_path)
+    run_dragon_tiger_scan(db_path, MissingRangeDragonProvider(), "2026-05-29")
+
+    item = WatchRepository(db_path).get("sz000858")
+    assert item is not None
+    assert item.now == 83.0
+    assert item.high == 84.89
+    assert item.low == 84.89

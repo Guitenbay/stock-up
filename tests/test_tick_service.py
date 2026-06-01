@@ -22,9 +22,12 @@ def test_tick_updates_watch_and_holding_quotes(tmp_path):
     watch = WatchRepository(db_path).get("300308")
     holding = HoldingRepository(db_path).get("600000")
     assert watch.now == 125
-    assert watch.high == 125
+    assert watch.high == 126
+    assert watch.low == 100
     assert watch.avg == 122
     assert holding.now == 12
+    assert holding.high == 12.5
+    assert holding.low == 9
     assert holding.highest == 12.5
     assert summary.updated_watch_count == 1
     assert summary.updated_holding_count == 1
@@ -76,3 +79,24 @@ def test_tick_suppresses_repeated_signal_within_price_threshold(tmp_path):
 
     assert len(first.holding_signals) == 1
     assert second.holding_signals == []
+
+
+def test_tick_does_not_replace_range_with_current_price_when_quote_range_missing(tmp_path):
+    db_path = tmp_path / "data.db"
+    init_db(db_path)
+    WatchRepository(db_path).upsert(WatchItem(code="300308", name="中际旭创", high=130, low=100, now=120))
+    HoldingRepository(db_path).upsert(Holding(code="600000", name="浦发银行", cost=10, quantity=100, now=10, highest=11, high=12, low=8))
+    provider = MockProvider(quotes={
+        "300308": Quote(code="300308", name="中际旭创", now=118, high=0, low=0, avg=118),
+        "600000": Quote(code="600000", name="浦发银行", now=9.8, high=0, low=0, avg=9.8),
+    })
+
+    run_tick(db_path, provider, trade_date="2026-05-31")
+
+    watch = WatchRepository(db_path).get("300308")
+    holding = HoldingRepository(db_path).get("600000")
+    assert watch.high == 130
+    assert watch.low == 100
+    assert holding.high == 12
+    assert holding.low == 8
+    assert holding.highest == 11

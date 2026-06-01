@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
 
 from stock_up.cli import app
+from stock_up.models import Quote
 from stock_up.repositories import HoldingRepository, WatchRepository
 
 
@@ -63,3 +64,46 @@ def test_hold_add_fetches_name_when_name_missing(tmp_path):
     assert item is not None
     assert item.name
     assert item.name != "sz300308"
+
+
+def test_watch_add_uses_qq_range_when_high_low_missing(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    monkeypatch.setattr("stock_up.cli._get_realtime_quote", lambda code, provider="qq": Quote(
+        code="sz300308",
+        name="中际旭创",
+        now=120,
+        high=126,
+        low=118,
+    ))
+
+    result = runner.invoke(app, ["watch", "add", "300308", "--home", str(home)])
+
+    assert result.exit_code == 0
+    item = WatchRepository(home / "data.db").get("sz300308")
+    assert item is not None
+    assert item.name == "中际旭创"
+    assert item.now == 120
+    assert item.high == 126
+    assert item.low == 118
+
+
+def test_hold_add_uses_qq_range_when_high_low_missing(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    monkeypatch.setattr("stock_up.cli._get_realtime_quote", lambda code, provider="qq": Quote(
+        code="sz300308",
+        name="中际旭创",
+        now=120,
+        high=126,
+        low=118,
+    ))
+
+    result = runner.invoke(app, ["hold", "add", "300308", "--home", str(home), "--cost", "100", "--qty", "100"])
+
+    assert result.exit_code == 0
+    item = HoldingRepository(home / "data.db").get("sz300308")
+    assert item is not None
+    assert item.name == "中际旭创"
+    assert item.high == 126
+    assert item.low == 118
