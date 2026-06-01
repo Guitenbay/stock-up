@@ -168,11 +168,13 @@ report:
 | `stock-up watch check` | 检查观察池信号 | `stock-up watch check` |
 | `stock-up watch abandoned` | 查看废弃观察池 | `stock-up watch abandoned` |
 | `stock-up watch add CODE` | 手动加入观察池；不传 `--name` 时会尝试自动获取股票名 | `stock-up watch add 300308 --high 130 --low 110` |
-| `stock-up watch set CODE` | 修正观察股高低点 | `stock-up watch set 300308 --high 135 --low 112` |
+| `stock-up watch set CODE` | 修正单只观察股高低点 | `stock-up watch set 300308 --high 135 --low 112` |
+| `stock-up watch refresh-range` | 用 QQ 实时行情刷新观察池所有股票高低点 | `stock-up watch refresh-range` |
 | `stock-up hold add CODE` | 添加持仓；不传 `--name` 时会尝试自动获取股票名 | `stock-up hold add 300308 --cost 120 --qty 100 --rule both` |
 | `stock-up hold list` | 查看持仓 | `stock-up hold list` |
 | `stock-up hold check` | 检查持仓信号 | `stock-up hold check` |
 | `stock-up hold set CODE` | 修正持仓参数 | `stock-up hold set 300308 --highest 150 --rule hai_long` |
+| `stock-up hold refresh-range` | 用 QQ 实时行情刷新持仓池所有股票高低点 | `stock-up hold refresh-range` |
 | `stock-up hold add-buy CODE` | 记录加仓并更新加权平均成本 | `stock-up hold add-buy 300308 --price 125 --qty 100` |
 | `stock-up hold close CODE` | 关闭持仓 | `stock-up hold close 300308 --price 135 --reason 止盈` |
 | `stock-up scan dragon-tiger` | 扫描龙虎榜并加入观察池 | `stock-up scan dragon-tiger --date 2026-05-29` |
@@ -212,11 +214,19 @@ stock-up watch check
 stock-up watch abandoned
 ```
 
-修正高低点：
+修正单只股票高低点：
 
 ```bash
 stock-up watch set 300308 --high 135 --low 112
 ```
+
+用 QQ 实时行情刷新观察池所有股票高低点：
+
+```bash
+stock-up watch refresh-range
+```
+
+这个命令会刷新观察池所有活动股票的 `high` / `low` / `now` / `avg` / `name`。如果 QQ 没返回有效高低点，会跳过该股票，不会用当前价冒充高低点。
 
 ## 持仓
 
@@ -253,6 +263,14 @@ stock-up hold add-buy 300308 --price 125 --qty 100
 ```bash
 stock-up hold check
 ```
+
+用 QQ 实时行情刷新持仓池所有股票高低点：
+
+```bash
+stock-up hold refresh-range
+```
+
+这个命令会刷新持仓池所有股票的 `high` / `low` / `now` / `name`，并用 `quote.high` 上调 `highest`。如果 QQ 没返回有效高低点，会跳过该股票。
 
 关闭持仓：
 

@@ -73,7 +73,16 @@ stock-up daily
 ~/.stock-up/reports/YYYY-MM-DD.md
 ```
 
-### 5. 检查持仓
+### 5. 必要时刷新高低点
+
+如果历史数据里的高低点不准确，可以用 QQ 实时行情刷新：
+
+```bash
+stock-up watch refresh-range
+stock-up hold refresh-range
+```
+
+### 6. 检查持仓
 
 ```bash
 stock-up hold check
@@ -81,7 +90,7 @@ stock-up hold check
 
 手动查看当前持仓是否触发止损、止盈、RSI 死叉或增持观察。
 
-### 6. 卖出后关闭持仓
+### 7. 卖出后关闭持仓
 
 ```bash
 stock-up hold close 300308 --price 135 --reason 止盈
