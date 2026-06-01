@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from stock_up.cli import app
-from stock_up.models import Quote
+from stock_up.models import Quote, WatchItem
 from stock_up.repositories import HoldingRepository, WatchRepository
 
 
@@ -64,6 +64,16 @@ def test_hold_add_fetches_name_when_name_missing(tmp_path):
     assert item is not None
     assert item.name
     assert item.name != "sz300308"
+
+
+def test_watch_list_handles_invalid_range(tmp_path):
+    home = tmp_path / "home"
+    runner.invoke(app, ["init", "--home", str(home)])
+    WatchRepository(home / "data.db").upsert(WatchItem(code="sz300308", name="中际旭创", high=0, low=0, now=120))
+
+    result = runner.invoke(app, ["watch", "list", "--home", str(home)])
+
+    assert result.exit_code == 0
 
 
 def test_watch_add_uses_qq_range_when_high_low_missing(tmp_path, monkeypatch):

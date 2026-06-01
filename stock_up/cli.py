@@ -247,9 +247,10 @@ def watch_list(home: Path = typer.Option(default_home(), "--home")):
     rows = repo.list_active()
     table = Table("代码", "名称", "状态", "现价", "高点", "低点", "0.382", "0.618", "0.786", "位置", "原因")
     for item in rows:
-        levels = calculate_fib_levels(item.high, item.low)
-        position = "-"
-        if item.now:
+        has_valid_range = item.high > 0 and item.low > 0 and item.high > item.low
+        levels = calculate_fib_levels(item.high, item.low) if has_valid_range else None
+        position = "数据不足" if not has_valid_range or item.now <= 0 else "-"
+        if levels and item.now:
             if item.now <= levels.f786 or item.now < item.low:
                 position = "废弃线"
             elif item.now <= levels.f618 * 1.02:
@@ -265,9 +266,9 @@ def watch_list(home: Path = typer.Option(default_home(), "--home")):
             f"{item.now:g}",
             f"{item.high:g}",
             f"{item.low:g}",
-            f"{levels.f382:g}",
-            f"{levels.f618:g}",
-            f"{levels.f786:g}",
+            f"{levels.f382:g}" if levels else "-",
+            f"{levels.f618:g}" if levels else "-",
+            f"{levels.f786:g}" if levels else "-",
             position,
             item.reason,
         )

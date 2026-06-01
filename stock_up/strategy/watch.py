@@ -3,8 +3,17 @@ from stock_up.strategy.fib import calculate_fib_levels
 
 
 def evaluate_watch(item: WatchItem, buy_382_tolerance: float = 0.03, buy_618_tolerance: float = 0.02) -> SignalResult:
-    levels = calculate_fib_levels(item.high, item.low)
     now = item.now
+    if item.high <= 0 or item.low <= 0 or item.high <= item.low or now <= 0:
+        return SignalResult(
+            action="hold",
+            title="数据不足",
+            reasons=["缺少有效高点、低点或当前价，无法计算观察信号"],
+            level="info",
+            price=now,
+        )
+
+    levels = calculate_fib_levels(item.high, item.low)
 
     if now <= levels.f786 or now < item.low:
         return SignalResult(

@@ -20,3 +20,24 @@ def test_watch_strong_defense():
     result = evaluate_watch(item)
     assert result.action == "watch"
     assert "强防" in result.title
+
+
+def test_watch_returns_data_insufficient_when_range_missing():
+    item = WatchItem(code="x", high=0, low=0, now=12)
+    result = evaluate_watch(item)
+    assert result.action == "hold"
+    assert result.title == "数据不足"
+
+
+def test_watch_returns_data_insufficient_when_price_missing():
+    item = WatchItem(code="x", high=20, low=10, now=0)
+    result = evaluate_watch(item)
+    assert result.action == "hold"
+    assert result.title == "数据不足"
+
+
+def test_watch_returns_data_insufficient_when_range_invalid():
+    item = WatchItem(code="x", high=10, low=20, now=12)
+    result = evaluate_watch(item)
+    assert result.action == "hold"
+    assert result.title == "数据不足"
