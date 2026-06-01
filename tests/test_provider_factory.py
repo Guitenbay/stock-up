@@ -29,7 +29,11 @@ def test_make_dragon_tiger_auto_uses_stockapi():
     assert isinstance(make_provider("auto", purpose="dragon_tiger"), StockApiProvider)
 
 
-def test_make_limit_up_auto_uses_akshare():
+def test_make_limit_up_auto_uses_akshare(monkeypatch):
+    import sys
+
     from stock_up.market.akshare_provider import AkShareProvider
+
+    monkeypatch.setitem(sys.modules, "akshare", object())
 
     assert isinstance(make_provider("auto", purpose="limit_up"), AkShareProvider)
