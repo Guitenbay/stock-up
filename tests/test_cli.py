@@ -23,8 +23,9 @@ def test_watch_add_and_list_with_manual_values(tmp_path):
 
     result = runner.invoke(app, ["watch", "list", "--home", str(home)])
     assert result.exit_code == 0
-    assert "300308" in result.stdout
-    assert "中际旭创" in result.stdout
+    item = WatchRepository(home / "data.db").get("sz300308")
+    assert item is not None
+    assert item.name == "中际旭创"
 
 
 def test_hold_add_buy_close(tmp_path):

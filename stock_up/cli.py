@@ -18,6 +18,7 @@ from stock_up.services.dragon_tiger_scanner import run_dragon_tiger_scan
 from stock_up.services.scanner import run_limit_up_scan
 from stock_up.services.tick import run_tick
 from stock_up.repositories import AlertRepository, HoldingRepository, TradeRepository, WatchRepository
+from stock_up.strategy.fib import calculate_fib_levels
 from stock_up.strategy.holding import evaluate_holding
 from stock_up.strategy.trading_day import trading_days_since
 from stock_up.strategy.watch import evaluate_watch
@@ -88,6 +89,37 @@ def _resolve_stock_name(code: str, provided_name: str, provider: str = "qq") -> 
     return full_code
 
 
+def _print_grouped_signals(prefix: str, signals) -> None:
+    if not signals:
+        return
+    by_stock = {}
+    for signal in signals:
+        item = by_stock.setdefault(signal.code, {"name": signal.name, "signals": []})
+        item["name"] = item["name"] or signal.name
+        item["signals"].append(signal)
+
+    grouped = {}
+    for code, item in by_stock.items():
+        titles = []
+        reasons = []
+        for signal in item["signals"]:
+            if signal.title not in titles:
+                titles.append(signal.title)
+            reasons.extend(signal.reasons)
+        group_title = " / ".join(titles)
+        grouped.setdefault(group_title, []).append({
+            "code": code,
+            "name": item["name"],
+            "reasons": list(dict.fromkeys(reasons)),
+        })
+
+    for title, rows in grouped.items():
+        console.print(f"{prefix}｜{title}")
+        for row in rows:
+            reasons = "; ".join(row["reasons"])
+            console.print(f"  {row['code']} {row['name']}: {reasons}")
+
+
 @app.command()
 def quote(
     code: str,
@@ -124,6 +156,8 @@ def tick(
     provider_name = _resolve_provider(home, provider, "realtime")
     summary = run_tick(db_path(home), _make_provider(provider_name, purpose="realtime"))
     console.print(f"tick完成: 观察 {summary.updated_watch_count}，持仓 {summary.updated_holding_count}")
+    _print_grouped_signals("观察", summary.watch_signals)
+    _print_grouped_signals("持仓", summary.holding_signals)
 
 
 @app.command()
@@ -197,9 +231,32 @@ def watch_add(
 def watch_list(home: Path = typer.Option(default_home(), "--home")):
     repo = WatchRepository(db_path(home))
     rows = repo.list_active()
-    table = Table("代码", "名称", "状态", "高点", "低点", "现价")
+    table = Table("代码", "名称", "状态", "现价", "高点", "低点", "0.382", "0.618", "0.786", "位置", "原因")
     for item in rows:
-        table.add_row(item.code, item.name, item.status, f"{item.high:g}", f"{item.low:g}", f"{item.now:g}")
+        levels = calculate_fib_levels(item.high, item.low)
+        position = "-"
+        if item.now:
+            if item.now <= levels.f786 or item.now < item.low:
+                position = "废弃线"
+            elif item.now <= levels.f618 * 1.02:
+                position = "近0.618"
+            elif item.now <= levels.f382 * 1.03 and item.now > levels.f618:
+                position = "近0.382"
+            else:
+                position = "观察"
+        table.add_row(
+            item.code,
+            item.name,
+            item.status,
+            f"{item.now:g}",
+            f"{item.high:g}",
+            f"{item.low:g}",
+            f"{levels.f382:g}",
+            f"{levels.f618:g}",
+            f"{levels.f786:g}",
+            position,
+            item.reason,
+        )
     console.print(table)
 
 
@@ -297,9 +354,23 @@ def hold_add(
 @hold_app.command("list")
 def hold_list(home: Path = typer.Option(default_home(), "--home")):
     repo = HoldingRepository(db_path(home))
-    table = Table("代码", "名称", "成本", "数量", "规则")
+    table = Table("代码", "名称", "现价", "成本", "盈亏%", "数量", "最高", "高点", "低点", "波段低", "参考高", "规则")
     for h in repo.list_open():
-        table.add_row(h.code, h.name, f"{h.cost:g}", str(h.quantity), h.rule_type)
+        pnl_pct = ((h.now - h.cost) / h.cost * 100) if h.cost and h.now else 0.0
+        table.add_row(
+            h.code,
+            h.name,
+            f"{h.now:g}",
+            f"{h.cost:g}",
+            f"{pnl_pct:.2f}%",
+            str(h.quantity),
+            f"{h.highest:g}",
+            f"{h.high:g}",
+            f"{h.low:g}",
+            f"{h.swing_low:g}",
+            f"{h.ref_high:g}",
+            h.rule_type,
+        )
     console.print(table)
 
 
