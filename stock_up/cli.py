@@ -158,7 +158,7 @@ def scan_dragon_tiger(
     """扫描龙虎榜并加入观察池。"""
     date_text = trade_date or date.today().isoformat()
     provider_name = _resolve_provider(home, provider, "dragon_tiger")
-    summary = run_dragon_tiger_scan(db_path(home), _make_provider(provider_name, purpose="scan"), date_text)
+    summary = run_dragon_tiger_scan(db_path(home), _make_provider(provider_name, purpose="dragon_tiger"), date_text)
     console.print(f"龙虎榜扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}")
 
 
@@ -172,7 +172,7 @@ def scan_limit_up(
     """扫描涨停池并加入观察池。"""
     date_text = trade_date or date.today().isoformat()
     provider_name = _resolve_provider(home, provider, "limit_up")
-    summary = run_limit_up_scan(db_path(home), _make_provider(provider_name, purpose="scan"), date_text, initial_low_mode=low_mode)  # type: ignore[arg-type]
+    summary = run_limit_up_scan(db_path(home), _make_provider(provider_name, purpose="limit_up"), date_text, initial_low_mode=low_mode)  # type: ignore[arg-type]
     console.print(f"涨停扫描完成: 总数 {summary.total_count}，加入 {summary.added_count}，跳过 {summary.skipped_count}")
 
 

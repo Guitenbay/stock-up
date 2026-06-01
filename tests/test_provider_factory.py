@@ -23,3 +23,13 @@ def test_make_stockapi_provider():
 
 def test_make_daily_auto_uses_stockapi():
     assert isinstance(make_provider("auto", purpose="daily"), StockApiProvider)
+
+
+def test_make_dragon_tiger_auto_uses_stockapi():
+    assert isinstance(make_provider("auto", purpose="dragon_tiger"), StockApiProvider)
+
+
+def test_make_limit_up_auto_uses_akshare():
+    from stock_up.market.akshare_provider import AkShareProvider
+
+    assert isinstance(make_provider("auto", purpose="limit_up"), AkShareProvider)

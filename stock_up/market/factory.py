@@ -19,7 +19,7 @@ def make_provider(name: str, purpose: str = "realtime") -> MarketDataProvider:
     if name == "auto":
         if purpose == "realtime":
             return TencentProvider()
-        if purpose in ("daily", "rsi"):
+        if purpose in ("daily", "rsi", "dragon_tiger"):
             return StockApiProvider()
         return AkShareProvider()
     raise ValueError(f"Unknown provider: {name}")
