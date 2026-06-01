@@ -17,12 +17,6 @@
 python3 -m pip install stock-up
 ```
 
-如果要使用 AkShare 备用数据源：
-
-```bash
-python3 -m pip install 'stock-up[akshare]'
-```
-
 验证安装：
 
 ```bash

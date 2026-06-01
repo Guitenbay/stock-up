@@ -168,12 +168,7 @@ http://data.gtimg.cn/flashdata/hushen/weekly/sz000858.js
 
 ### stock-up 使用方式
 
-`stock-up` 使用腾讯日 K 作为 RSI 的备用数据源：
-
-```text
-优先：AkShare 日 K
-备用：腾讯日 K
-```
+`stock-up` 目前主要使用腾讯接口获取实时行情和股票名。日 K / RSI 优先使用 StockAPI；腾讯日 K 文档保留为接口参考。
 
 腾讯日 K 会按年份请求最近若干年的 daily 文件，然后解析为统一 `DailyBar`：
 
