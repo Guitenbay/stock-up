@@ -1,7 +1,7 @@
 from stock_up.db import init_db
 from stock_up.market.mock import MockProvider
 from stock_up.models import Holding, Quote, WatchItem
-from stock_up.repositories import HoldingRepository, WatchRepository
+from stock_up.repositories import AlertRepository, HoldingRepository, WatchRepository
 from stock_up.strategy.fib import calculate_fib_levels
 from stock_up.services.tick import run_tick
 
@@ -114,6 +114,30 @@ def test_tick_returns_watch_limit_up_signal_instead_of_buy_signal(tmp_path):
 
     assert len(summary.watch_signals) == 1
     assert summary.watch_signals[0].title == "涨停不追"
+    assert WatchRepository(db_path).get("300308").status == "watching"
+
+
+def test_tick_marks_abandoned_even_when_alert_is_suppressed(tmp_path):
+    db_path = tmp_path / "data.db"
+    init_db(db_path)
+    WatchRepository(db_path).upsert(WatchItem(code="300308", name="中际旭创", high=20, low=10, now=16))
+    AlertRepository(db_path).record(
+        "300308",
+        "中际旭创",
+        "放弃/移入废弃",
+        "danger",
+        10,
+        "已有相同废弃提醒",
+        "2026-05-31",
+    )
+    provider = MockProvider(quotes={
+        "300308": Quote(code="300308", name="中际旭创", now=10, high=20, low=10, avg=10),
+    })
+
+    summary = run_tick(db_path, provider, trade_date="2026-05-31")
+
+    assert summary.watch_signals == []
+    assert WatchRepository(db_path).get("300308").status == "abandoned"
 
 
 def test_tick_returns_holding_limit_down_risk_signal(tmp_path):

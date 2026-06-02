@@ -43,8 +43,27 @@ def test_watch_returns_data_insufficient_when_range_invalid():
     assert result.title == "数据不足"
 
 
-def test_watch_all_day_limit_with_equal_high_low_is_observe():
-    item = WatchItem(code="x", high=19.06, low=19.06, now=19.06)
+def test_watch_limit_up_at_low_is_not_abandoned():
+    item = WatchItem(code="x", high=20, low=10, now=10, limit_status="涨停")
     result = evaluate_watch(item)
     assert result.action == "hold"
-    assert result.title == "一字板观望"
+    assert result.title == "涨停观望"
+
+
+def test_watch_abandons_when_price_touches_low():
+    item = WatchItem(code="x", high=20, low=10, now=10)
+    result = evaluate_watch(item)
+    assert result.action == "abandon"
+
+
+def test_watch_abandons_when_price_touches_f786():
+    item = WatchItem(code="x", high=20, low=10, now=12.14)
+    result = evaluate_watch(item)
+    assert result.action == "abandon"
+
+
+def test_watch_all_day_limit_up_with_equal_high_low_is_observe():
+    item = WatchItem(code="x", high=19.06, low=19.06, now=19.06, limit_status="涨停")
+    result = evaluate_watch(item)
+    assert result.action == "hold"
+    assert result.title == "涨停观望"

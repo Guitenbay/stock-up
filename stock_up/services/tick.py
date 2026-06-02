@@ -69,11 +69,11 @@ def run_tick(db_path: Path, provider: MarketDataProvider, trade_date: str | None
             continue
 
         result = evaluate_watch(item)
+        message = "; ".join(result.reasons)
+        if result.action == "abandon":
+            watch_repo.mark_abandoned(item.code, message, today)
         if result.action in ("watch", "abandon") and alerts.should_alert(item.code, result.title, result.price, 0.01):
-            message = "; ".join(result.reasons)
             alerts.record(item.code, item.name, result.title, result.level, result.price, message, today)
-            if result.action == "abandon":
-                watch_repo.mark_abandoned(item.code, message, today)
             watch_signals.append(TickSignal(
                 code=item.code,
                 name=item.name,
