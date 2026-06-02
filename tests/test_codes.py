@@ -6,6 +6,7 @@ def test_format_a_share_codes():
     assert format_code("300308") == "sz300308"
     assert format_code("510300") == "sh510300"
     assert format_code("830001") == "bj830001"
+    assert format_code("920190") == "bj920190"
 
 
 def test_format_hk_codes():

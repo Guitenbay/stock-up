@@ -14,7 +14,7 @@ def format_code(code: str) -> str | None:
         return "hk" + value.zfill(5)
 
     if len(value) == 6:
-        if value.startswith(("4", "8")):
+        if value.startswith(("4", "8", "9")):
             return "bj" + value
         if value.startswith("6") or value.startswith(("51", "56", "58")):
             return "sh" + value
